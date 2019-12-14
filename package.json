@@ -1,0 +1,33 @@
+{
+  "name": "zophin",
+  "version": "0.0.1",
+  "description": "A ",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ruiyeah/zophin.git"
+  },
+  "keywords": [
+    "leveldb"
+  ],
+  "author": "rui",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ruiyeah/zophin/issues"
+  },
+  "homepage": "https://github.com/ruiyeah/zophin#readme",
+  "dependencies": {
+    "@babel/polyfill": "^7.7.0",
+    "languagedetect": "^2.0.0",
+    "level": "^6.0.0",
+    "natural": "^0.6.3"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.7.5",
+    "@babel/core": "^7.7.5",
+    "@babel/preset-env": "^7.7.6"
+  }
+}
