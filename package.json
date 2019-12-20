@@ -1,5 +1,5 @@
 {
-  "name": "zophin",
+  "name": "level-min",
   "version": "0.0.1",
   "description": "A ",
   "main": "index.js",
@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ruiyeah/zophin.git"
+    "url": "git+https://github.com/ruiyeah/level-min.git"
   },
   "keywords": [
     "leveldb"
@@ -16,14 +16,15 @@
   "author": "rui",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/ruiyeah/zophin/issues"
+    "url": "https://github.com/ruiyeah/level-min/issues"
   },
-  "homepage": "https://github.com/ruiyeah/zophin#readme",
+  "homepage": "https://github.com/ruiyeah/level-min#readme",
   "dependencies": {
     "@babel/polyfill": "^7.7.0",
     "languagedetect": "^2.0.0",
     "level": "^6.0.0",
-    "natural": "^0.6.3"
+    "natural": "^0.6.3",
+    "segmentit": "^2.0.2"
   },
   "devDependencies": {
     "@babel/cli": "^7.7.5",
