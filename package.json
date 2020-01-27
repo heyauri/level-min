@@ -2,7 +2,7 @@
   "name": "level-min",
   "version": "0.0.1",
   "description": "A ",
-  "main": "index.js",
+  "main": "lib/main.js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ruiyeah/level-min.git"
@@ -26,12 +26,14 @@
   "dependencies": {
     "languagedetect": "^2.0.0",
     "level": "^6.0.0",
+    "md5": "^2.2.1",
     "natural": "^0.6.3",
     "segmentit": "^2.0.3"
   },
   "devDependencies": {
     "@babel/cli": "^7.8.3",
     "@babel/core": "^7.8.3",
+    "@babel/plugin-transform-runtime": "^7.8.3",
     "@babel/preset-env": "^7.8.3"
   }
 }
