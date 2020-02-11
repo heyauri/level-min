@@ -3,26 +3,31 @@ export function getType(v) {
 }
 
 export function isString(v) {
-    return getType(v) === "[Object String]";
+    return getType(v) === "[object String]";
 }
 
 export function isNumber(v) {
-    return getType(v) === "[Object Number]";
+    return getType(v) === "[object Number]";
 }
 
 export function isObject(v) {
-    return getType(v) === "[Object Object]";
+    return getType(v) === "[object Object]";
+}
+export function isArray(v) {
+    return getType(v) === "[object Array]";
 }
 
-export function mergeTokens(a, b) {
+//t : coefficient of the b value
+export function mergeTokens(a, b, t) {
     try {
-        for (let key in Object.keys(b)) {
+        if((!t && t !== 0)||!isNumber(t)) t = 1;
+        for (let key of Object.keys(b)) {
             if (key in a) {
                 if (isNumber(a[key]) && isNumber(b[key])) {
-                    a[key] = a[key] + b[key]
+                    a[key] = a[key] + b[key] * t
                 }
             } else {
-                a[key] = b[key];
+                a[key] = b[key] * t;
             }
         }
     } catch (e) {

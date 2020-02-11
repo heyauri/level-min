@@ -24,7 +24,8 @@
   },
   "homepage": "https://github.com/ruiyeah/level-min#readme",
   "dependencies": {
-    "languagedetect": "^2.0.0",
+    "franc": "^5.0.0",
+    "langjudge": "^0.3.0",
     "level": "^6.0.0",
     "md5": "^2.2.1",
     "natural": "^0.6.3",

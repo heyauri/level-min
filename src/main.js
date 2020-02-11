@@ -41,31 +41,66 @@ class Min {
         if(!options){
             options={};
         }
-        if(!(options["key_weight"] in options) || !utils.isNumber(options["key_weight"])){
+        if(!("key_weight" in options) || !utils.isNumber(options["key_weight"])){
             options["key_weight"]=1;
         }
-        if(!(options["value_weight_diff"] in options)){
-            options["value_weight_diff"]=false;
+        if(!("value_weight_calc" in options)){
+            options["value_weight_calc"]=false;
         }
-        if(!(options["default_value_weight"] in options) || !utils.isNumber(options["default_value_weight"])){
+        if(!("default_value_weight" in options) || !utils.isNumber(options["default_value_weight"])){
             options["default_value_weight"]=1;
         }
-        if(!(options["value_weights"] in options) || !utils.isObject(options["value_weights"])){
+        if(!("value_weights" in options) || !utils.isObject(options["value_weights"])){
             options["value_weights"]={};
         }
+        return options;
+    }
+
+
+
+    get_tokens(key, value, options){
+        let tokens={};
+        let temp_tokens={};
+        if (options["key_weight"]){
+            let temp_tokens=tokenizer(key);
+            utils.mergeTokens(tokens,temp_tokens);
+        }
+        if(options["value_weight_calc"]){
+            let default_value_weight=options["default_value_weight"];
+            let value_weights=options["value_weights"];
+            if(utils.isString(value)){
+                temp_tokens=tokenizer(value);
+                utils.mergeTokens(tokens,temp_tokens,default_value_weight);
+            }else if(utils.isObject(value)){
+                for(let key of Object.keys(value)){
+                    if(key in value_weights || default_value_weight>0){
+                        temp_tokens=tokenizer(value[key]);
+                        let weight = key in value_weights? value_weights[key] : default_value_weight;
+                        utils.mergeTokens(tokens,temp_tokens,weight);
+                    }
+                }
+            }else if(utils.isArray(value)){
+                for(let i=0;i<value.length;i++){
+                    if(i in value_weights || default_value_weight>0){
+                        temp_tokens=tokenizer(value[i]);
+                        let weight = i in value_weights? value_weights[i] : default_value_weight;
+                        utils.mergeTokens(tokens,temp_tokens,weight);
+                    }
+                }
+            }
+        }
+
+        return tokens;
     }
 
     create(key, value, options){
-        let tokens={};
-        if (options["key_weight"]){
-            let temp_tokens=tokenizer(key);
-        }
-
+        let tokens=this.get_tokens(key, value, options);
+        console.log(tokens);
     }
 
     async put(key, value, options) {
         let k = md5(key);
-        this.init_options(options);
+        options=this.init_options(options);
         let obj = await this.db.get(construct_key(k)).catch(e => {
             if (e.type === "NotFoundError") {
                 return false;
