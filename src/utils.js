@@ -34,3 +34,24 @@ export function mergeTokens(a, b, t) {
         console.error("Oops..There are some errors in tokens' merging process.")
     }
 }
+
+export function diffTokens(t_old,t_new) {
+    let update_tokens={};
+    for(let key of Object.keys(t_old)){
+        if(!(key in t_new)){
+            update_tokens[key]=-1;
+            continue;
+        }
+        if(t_old[key] !== t_new[key]){
+            update_tokens[key]=t_new[key];
+        }
+        delete t_new[key];
+    }
+    for (let key of Object.keys(t_new)){
+        if(!(key in t_old)){
+            update_tokens[key]=t_new[key];
+        }
+    }
+
+    return update_tokens
+}
