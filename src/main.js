@@ -26,7 +26,21 @@ function stringify(value) {
 class Min {
     constructor() {
         if (arguments.length > 0) {
-            this.set_db(arguments[0], arguments[1])
+            let db_address=arguments[0];
+            let options=arguments[1] || {};
+            return (async ()=>{
+                try {
+                    if (db_address.indexOf("/") < 0 && db_address.indexOf("\\") < 0) {
+                        db_address = path.join(process.cwd(), db_address);
+                    }
+                    this.db = Level(db_address, options);
+                    this.doc_count =await this.get_doc_count();
+                    console.log("Leveldb selected: " + db_address);
+                } catch (e) {
+                    console.error("Leveldb setup failed at: " + db_address + " \nPlease check your db_address and options.");
+                    console.error(e);
+                }
+            })();
         }
     }
 
@@ -37,6 +51,19 @@ class Min {
             }
             options = options || {};
             this.db = Level(db_address, options);
+            let _this = this;
+            this.db.get("0x000_doc_count",function (err,val) {
+                if(!val && err){
+                    if(err.type === "NotFoundError"){
+                        _this.doc_count =0;
+                    }else{
+                        throw err;
+                    }
+                }else{
+                    _this.doc_count= parseInt(val) ? parseInt(val) : 0;
+                }
+                console.log(_this.doc_count);
+            });
             console.log("Leveldb selected: " + db_address);
         } catch (e) {
             console.error("Leveldb setup failed at: " + db_address + " \nPlease check your db_address and options.");
@@ -124,8 +151,9 @@ class Min {
         })
     }
 
-    async create(key, value, options, doc_count) {
+    async create(key, value, options) {
         let doc_id = md5(key);
+        this.doc_count+=1;
         let tokens = this.get_tokens(key, value, options);
         let promise_arr = [];
         for (let token of Object.keys(tokens)) {
@@ -145,7 +173,7 @@ class Min {
                 key: construct_key(doc_id),
                 value: JSON.stringify({k: key, v: JSON.stringify(value), o: JSON.stringify(options)})
             });
-            ops.push({type: "put", key: "0x000_doc_count", value: (doc_count + 1).toString()});
+            ops.push({type: "put", key: "0x000_doc_count", value: (this.doc_count).toString()});
             return ops;
         }).catch(e => {
             console.error("Oops...The Create operation is interrupted by an internal error.");
@@ -153,11 +181,13 @@ class Min {
         });
         return new Promise((resolve, reject) => {
             if (ops instanceof EvalError) {
+                this.doc_count-=1;
                 reject(ops);
             }
             this.db.batch(ops).then(info => {
                 resolve("Put: " + key + " successfully.");
             }).catch(e => {
+                this.doc_count-=1;
                 console.error(e);
                 console.error("Oops...The Create operation is interrupted by an internal error.");
                 reject(e);
@@ -166,7 +196,7 @@ class Min {
     }
 
 
-    async update(key, value, options, doc_count, prev_obj) {
+    async update(key, value, options, prev_obj) {
         let doc_id = md5(key);
         let tokens = this.get_tokens(key, value, options);
         let prev_tokens = this.get_tokens(prev_obj["k"], prev_obj["v"], prev_obj["o"]);
@@ -226,7 +256,8 @@ class Min {
 
     async put(key, value, options) {
         let doc_id = md5(key);
-        let doc_count = await this.get_doc_count();
+        let doc_count = this.doc_count;
+        console.log(this.doc_count);
         if (!doc_count && doc_count !== 0) {
             console.error("There are some internal errors inside the db about the docs' count, the PUT operation failed.");
             //TODO this.doc_count_fix()
@@ -239,10 +270,8 @@ class Min {
         });
         options = this.init_options(options);
         try {
-            console.log(doc_count);
-            doc_count = parseInt(doc_count);
             if (!obj) {
-                return await this.create(key, value, options, doc_count)
+                return await this.create(key, value, options)
             } else {
                 obj = JSON.parse(obj);
                 obj["v"] = JSON.parse(obj["v"]);
@@ -250,7 +279,7 @@ class Min {
                 if (key === obj["k"] && value === obj["v"] && options === obj["o"]) {
                     return true;
                 } else {
-                    return await this.update(key, value, options, doc_count, obj);
+                    return await this.update(key, value, options, obj);
                 }
             }
         } catch (e) {
@@ -261,7 +290,7 @@ class Min {
 
     async del(key) {
         let doc_id = md5(key);
-        let doc_count = await this.get_doc_count();
+        let doc_count = this.doc_count;
         if (!doc_count && doc_count !== 0) {
             console.error("There are some internal errors inside the db about the docs' count, the DEL operation failed.");
             //TODO this.doc_count_fix()
@@ -273,11 +302,11 @@ class Min {
             }
         });
         try {
-            doc_count = parseInt(doc_count);
             if (!obj) {
                 return Promise.resolve("The input key is not exist.");
             } else {
                 obj = JSON.parse(obj);
+                this.doc_count -=1;
                 let value = JSON.parse(obj["v"]);
                 let options = JSON.parse(obj["o"]);
                 let tokens = this.get_tokens(key, value, options);
@@ -299,7 +328,7 @@ class Min {
                         }
                     }
                     ops.push({type: "del", key: construct_key(doc_id)});
-                    ops.push({type: "put", key: "0x000_doc_count", value: (doc_count - 1).toString()});
+                    ops.push({type: "put", key: "0x000_doc_count", value: (this.doc_count).toString()});
                     return ops;
                 }).catch(e => {
                     console.error("Oops...The Delete operation is interrupted by an internal error.");
@@ -307,11 +336,13 @@ class Min {
                 });
                 return new Promise((resolve, reject) => {
                     if (ops instanceof EvalError) {
+                        this.doc_count+=1;
                         reject(ops);
                     }
                     this.db.batch(ops).then(info => {
                         resolve("Del: " + key + " successfully.");
                     }).catch(e => {
+                        this.doc_count+=1;
                         console.error(e);
                         console.error("Oops...The Delete operation is interrupted by an internal error.");
                         reject(e);
