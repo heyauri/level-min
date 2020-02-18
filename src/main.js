@@ -1,6 +1,7 @@
 import Level from "level"
 import path from "path"
 import md5 from "md5"
+import deAsync from "deasync"
 import * as utils from "./utils.js"
 import tokenizer from "./tokenizer.js"
 
@@ -12,35 +13,10 @@ function construct_key(key) {
     return "0x002_" + key.toString();
 }
 
-function stringify(value) {
-    if (utils.isString(value)) {
-        return value;
-    } else if (utils.isNumber(value)) {
-        return value.toString();
-    } else if (utils.isArray(value) || utils.isObject(value)) {
-        return JSON.stringify(value);
-    }
-}
-
-
 class Min {
     constructor() {
         if (arguments.length > 0) {
-            let db_address=arguments[0];
-            let options=arguments[1] || {};
-            return (async ()=>{
-                try {
-                    if (db_address.indexOf("/") < 0 && db_address.indexOf("\\") < 0) {
-                        db_address = path.join(process.cwd(), db_address);
-                    }
-                    this.db = Level(db_address, options);
-                    this.doc_count =await this.get_doc_count();
-                    console.log("Leveldb selected: " + db_address);
-                } catch (e) {
-                    console.error("Leveldb setup failed at: " + db_address + " \nPlease check your db_address and options.");
-                    console.error(e);
-                }
-            })();
+            this.set_db(arguments[0], arguments[1]);
         }
     }
 
@@ -52,17 +28,24 @@ class Min {
             options = options || {};
             this.db = Level(db_address, options);
             let _this = this;
-            this.db.get("0x000_doc_count",function (err,val) {
-                if(!val && err){
-                    if(err.type === "NotFoundError"){
-                        _this.doc_count =0;
-                    }else{
+            let done = false;
+            this.db.get("0x000_doc_count", function (err, val) {
+                if (!val && err) {
+                    if (err.type === "NotFoundError") {
+                        _this.doc_count = 0;
+                    } else {
                         throw err;
                     }
-                }else{
-                    _this.doc_count= parseInt(val) ? parseInt(val) : 0;
+                } else {
+                    _this.doc_count = parseInt(val) ? parseInt(val) : 0;
                 }
-                console.log(_this.doc_count);
+                done = true;
+            });
+            /*
+              Covert the query of doc_count from async to sync, to maintain its' consistency.
+             */
+            deAsync.loopWhile(() => {
+                return !done;
             });
             console.log("Leveldb selected: " + db_address);
         } catch (e) {
@@ -71,20 +54,23 @@ class Min {
         }
     }
 
+    // Options -> a schema that contain the rules of token-frequency calculation.
+    //        ["key_weight"] -> the default weight of the tokens inside key
+    //        ["value_weight_calc"] -> if the token inside the value will be counted or not?
+    //                                  True : False
+    //        ["default_value_weight"] ->  the default weight of the tokens inside value
+    //        ["value_weights"] ->  The values for those spec key/index when the value is an Array/Object
     init_options(options) {
         if (!options) {
             options = {};
         }
-        if (!("key_weight" in options) || !utils.isNumber(options["key_weight"])) {
+        if (("key_weight" in options) && !utils.isNumber(options["key_weight"])) {
             options["key_weight"] = 1;
         }
-        if (!("value_weight_calc" in options)) {
-            options["value_weight_calc"] = false;
-        }
-        if (!("default_value_weight" in options) || !utils.isNumber(options["default_value_weight"])) {
+        if (("default_value_weight" in options) && !utils.isNumber(options["default_value_weight"])) {
             options["default_value_weight"] = 1;
         }
-        if (!("value_weights" in options) || !utils.isObject(options["value_weights"])) {
+        if (("value_weights" in options) && !utils.isObject(options["value_weights"])) {
             options["value_weights"] = {};
         }
         return options;
@@ -120,6 +106,12 @@ class Min {
                         utils.mergeTokens(tokens, temp_tokens, weight);
                     }
                 }
+            } else if (utils.isNumber(value) || utils.isBoolean(value)){
+                try {
+                    tokens[value.toString()]= default_value_weight;
+                }catch (e) {
+                    console.error(e);
+                }
             }
         }
         return tokens;
@@ -153,7 +145,7 @@ class Min {
 
     async create(key, value, options) {
         let doc_id = md5(key);
-        this.doc_count+=1;
+        this.doc_count += 1;
         let tokens = this.get_tokens(key, value, options);
         let promise_arr = [];
         for (let token of Object.keys(tokens)) {
@@ -181,13 +173,13 @@ class Min {
         });
         return new Promise((resolve, reject) => {
             if (ops instanceof EvalError) {
-                this.doc_count-=1;
+                this.doc_count -= 1;
                 reject(ops);
             }
             this.db.batch(ops).then(info => {
                 resolve("Put: " + key + " successfully.");
             }).catch(e => {
-                this.doc_count-=1;
+                this.doc_count -= 1;
                 console.error(e);
                 console.error("Oops...The Create operation is interrupted by an internal error.");
                 reject(e);
@@ -212,10 +204,10 @@ class Min {
             for (let obj of results) {
                 //DEL:
                 if (tokens[obj["t"]] <= 0) {
-                    obj["l"] -= 1;
                     delete obj["v"][doc_id];
+                    obj["l"] = Object.keys(obj["v"]).length;
                     //there is no other doc related to this index, delete it
-                    if (obj["l"] === 0 && Object.keys(obj["v"]).length === 0) {
+                    if (obj["l"] === 0) {
                         ops.push({type: "del", key: construct_index(obj["t"])});
                         continue;
                     }
@@ -257,10 +249,9 @@ class Min {
     async put(key, value, options) {
         let doc_id = md5(key);
         let doc_count = this.doc_count;
-        console.log(this.doc_count);
         if (!doc_count && doc_count !== 0) {
             console.error("There are some internal errors inside the db about the docs' count, the PUT operation failed.");
-            //TODO this.doc_count_fix()
+            console.error("Try this.fix_doc_count()");
             return Promise.reject(false);
         }
         let obj = await this.db.get(construct_key(doc_id)).catch(e => {
@@ -293,7 +284,7 @@ class Min {
         let doc_count = this.doc_count;
         if (!doc_count && doc_count !== 0) {
             console.error("There are some internal errors inside the db about the docs' count, the DEL operation failed.");
-            //TODO this.doc_count_fix()
+            console.error("Try this.fix_doc_count()");
             return Promise.reject(false);
         }
         let obj = await this.db.get(construct_key(doc_id)).catch(e => {
@@ -306,7 +297,7 @@ class Min {
                 return Promise.resolve("The input key is not exist.");
             } else {
                 obj = JSON.parse(obj);
-                this.doc_count -=1;
+                this.doc_count -= 1;
                 let value = JSON.parse(obj["v"]);
                 let options = JSON.parse(obj["o"]);
                 let tokens = this.get_tokens(key, value, options);
@@ -318,10 +309,10 @@ class Min {
                     let ops = [];
                     for (let obj of results) {
                         //DEL:
-                        obj["l"] -= 1;
                         delete obj["v"][doc_id];
+                        obj["l"] = Object.keys(obj["v"]).length;
                         //there is no other doc related to this index, delete it
-                        if (obj["l"] === 0 && Object.keys(obj["v"]).length === 0) {
+                        if (obj["l"] === 0) {
                             ops.push({type: "del", key: construct_index(obj["t"])});
                         } else {
                             ops.push({type: "put", key: construct_index(obj["t"]), value: JSON.stringify(obj)});
@@ -336,13 +327,13 @@ class Min {
                 });
                 return new Promise((resolve, reject) => {
                     if (ops instanceof EvalError) {
-                        this.doc_count+=1;
+                        this.doc_count += 1;
                         reject(ops);
                     }
                     this.db.batch(ops).then(info => {
                         resolve("Del: " + key + " successfully.");
                     }).catch(e => {
-                        this.doc_count+=1;
+                        this.doc_count += 1;
                         console.error(e);
                         console.error("Oops...The Delete operation is interrupted by an internal error.");
                         reject(e);
@@ -354,17 +345,19 @@ class Min {
         }
     }
 
-    async get(key) {
-        let doc_id = md5(key);
+    // Hash : True -> The input key is the md5 doc_id of the key.
+    // Hash : False -> The origin key was input.
+    async get(key ,hash =false) {
+        let doc_id = hash? key:md5(key);
         let obj = await this.db.get(construct_key(doc_id)).catch(e => {
-            if (e.type === "NotFoundError") {
-                return false;
-            }
+                return e;
         });
+        if (obj instanceof EvalError) return Promise.reject(obj);
         try {
             obj = JSON.parse(obj);
             return {
                 key: obj["k"],
+                doc_id:doc_id,
                 value: JSON.parse(obj["v"]),
                 options: JSON.parse(obj["o"])
             };
@@ -373,8 +366,50 @@ class Min {
             return e;
         }
     }
+    //Search the content by tf-idf.
+    async search(content, topK) {
+        let tokens = tokenizer(content);
+        let promise_arr = [];
+        for (let token of Object.keys(tokens)) {
+            promise_arr.push(this.search_index(token));
+        }
+        let doc_count = await this.get_doc_count();
+        let results = await Promise.all(promise_arr).then(async results => {
+            let docs = {};
+            for (let result of results) {
+                let len = result["l"];
+                if (len === 0) continue;
+                let idf = 1 + Math.log(doc_count / (1 + len));
+                let tfs = result["v"];
+                for (let doc_id of Object.keys(tfs)) {
+                    let tf_norm = 1 + Math.log(1 + Math.log(tfs[doc_id]));
+                    doc_id in docs ? docs[doc_id] += idf * tf_norm : docs[doc_id] = idf * tf_norm;
+                }
+            }
+            docs = utils.sortByValue(docs);
+            let doc_ids = Object.keys(docs);
+            if (topK && topK < doc_ids.length)  doc_ids=doc_ids.slice(0,topK-1);
+            promise_arr=[];
+            for (let doc_id of doc_ids){
+                promise_arr.push(this.get(doc_id,true))
+            }
+            return await Promise.all(promise_arr).then(res=>{
+                for(let obj of res){
+                    obj["score"] = docs[obj["doc_id"]];
+                }
+                return res.sort((a,b)=>{ return b["score"] - a["score"]});
+            });
+        }).catch(e => {
+            return e;
+        });
+        if (results instanceof EvalError) {
+            return Promise.reject(results);
+        }else{
+            return Promise.resolve(results);
+        }
+    }
 
-    get_all() {
+    print_all() {
         this.db.createReadStream()
             .on('data', function (data) {
                 console.log(data.key, '=', data.value)
@@ -387,6 +422,24 @@ class Min {
             })
             .on('end', function () {
                 console.log('Stream ended')
+            })
+    }
+
+    fix_doc_count(){
+        let doc_count = 0;
+        let pattern = /^0x002_/;
+        let db=this.db;
+        this.db.createReadStream()
+            .on('data', function (data) {
+                if(pattern.test(data.key)) doc_count++;
+            })
+            .on('error', function (err) {
+                console.log('Oh my!', err)
+            })
+            .on('end', function () {
+                db.put("0x000_doc_count",doc_count).then(info=>{
+                    console.log("Rescan complete. The doc_count is "+doc_count.toString());
+                })
             })
     }
 }

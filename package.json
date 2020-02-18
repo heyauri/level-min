@@ -24,12 +24,14 @@
   },
   "homepage": "https://github.com/ruiyeah/level-min#readme",
   "dependencies": {
+    "deasync": "^0.1.19",
     "franc": "^5.0.0",
     "langjudge": "^0.3.0",
     "level": "^6.0.0",
     "md5": "^2.2.1",
     "natural": "^0.6.3",
-    "segmentit": "^2.0.3"
+    "segmentit": "^2.0.3",
+    "stopword": "^0.3.4"
   },
   "devDependencies": {
     "@babel/cli": "^7.8.3",

@@ -6,6 +6,10 @@ export function isString(v) {
     return getType(v) === "[object String]";
 }
 
+export function isBoolean(v) {
+    return getType(v) === "[object Boolean]";
+}
+
 export function isNumber(v) {
     return getType(v) === "[object Number]";
 }
@@ -13,6 +17,7 @@ export function isNumber(v) {
 export function isObject(v) {
     return getType(v) === "[object Object]";
 }
+
 export function isArray(v) {
     return getType(v) === "[object Array]";
 }
@@ -20,7 +25,7 @@ export function isArray(v) {
 //t : coefficient of the b value
 export function mergeTokens(a, b, t) {
     try {
-        if((!t && t !== 0)||!isNumber(t)) t = 1;
+        if ((!t && t !== 0) || !isNumber(t)) t = 1;
         for (let key of Object.keys(b)) {
             if (key in a) {
                 if (isNumber(a[key]) && isNumber(b[key])) {
@@ -35,23 +40,34 @@ export function mergeTokens(a, b, t) {
     }
 }
 
-export function diffTokens(t_old,t_new) {
-    let update_tokens={};
-    for(let key of Object.keys(t_old)){
-        if(!(key in t_new)){
-            update_tokens[key]=-1;
+export function diffTokens(t_old, t_new) {
+    let update_tokens = {};
+    for (let key of Object.keys(t_old)) {
+        if (!(key in t_new)) {
+            update_tokens[key] = -1;
             continue;
         }
-        if(t_old[key] !== t_new[key]){
-            update_tokens[key]=t_new[key];
+        if (t_old[key] !== t_new[key]) {
+            update_tokens[key] = t_new[key];
         }
         delete t_new[key];
     }
-    for (let key of Object.keys(t_new)){
-        if(!(key in t_old)){
-            update_tokens[key]=t_new[key];
+    for (let key of Object.keys(t_new)) {
+        if (!(key in t_old)) {
+            update_tokens[key] = t_new[key];
         }
     }
 
     return update_tokens
+}
+
+export function sortByValue(obj, des = true) {
+    return Object.keys(obj)
+        .sort((a, b) => {
+            return des ? obj[b] - obj[a] : obj[a] - obj[b];
+        })
+        .reduce((prev, cur) => {
+            prev[cur] = obj[cur];
+            return prev
+        }, {});
 }

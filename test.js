@@ -1,5 +1,5 @@
 const Min = require("./lib/main.js");
-
+const utils =require("./lib/utils");
 const min = new Min("data");
 
 min.put("11",
@@ -9,7 +9,7 @@ min.put("11",
 
 });
 min.put("This is a test of",
-    "了不起的修仙模拟器Jack  Tom love chicken...",
+    "了不起的修仙模拟器 Jack  Tom love chicken...",
     {"value_weight_calc":true}).then(info=>{
     console.log(info);
 
@@ -18,11 +18,14 @@ min.put("1",
     "卧槽 这他妈的什么玩意呀",
     {"value_weight_calc":true}).then(info=>{
     console.log(info);
-    min.get_all();
-    min.del("1").then(info=>{
+    //min.get_all();
+    min.get("1").then(info=>{
         console.log(info);
-        min.get("11").then(info=>{
-            console.log(info)
-        })
-    });
+    })
 });
+
+min.search("卧槽了不起的修仙模拟器",10).then(res=>{
+    console.log(res);
+});
+
+min.fix_doc_count();
