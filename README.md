@@ -42,7 +42,7 @@ min.put("example","A meaningless string.")
 let result = await min.search("Introduction");
 ```
 
-## Api
+## API
 
 - <a href="#Min"><code><b>Min()</b> / min.<b>set_db()</b></code></a>
 - <a href="#put"><code>min.<b>put()</b></code></a>
