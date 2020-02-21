@@ -8,7 +8,7 @@ import stopword from "stopword"
 const segmentit = useDefault(new Segment());
 const defaultTokenizer = new natural.WordTokenizer();
 
-const code_obj = {
+const codeObj = {
     "cmn": "Chinese", "jpn": "Japanese", "spa": "Spanish", "eng": "English",
     "rus": "Russian", "fas": "Persian", "fra": "French", "vie": "Vietnamese",
     "swe": "Swedish", "ita": "Italian", "pol": "Polish", "por": "Portuguese",
@@ -16,7 +16,7 @@ const code_obj = {
 };
 
 //Don't Change the sequence. It is related to the language-type-detect function.
-const tokenizer_funs = {
+const tokenizerFuns = {
     "Japanese": new natural.TokenizerJa(),
     "English": new natural.AggressiveTokenizer(),
     "Spanish": new natural.AggressiveTokenizerEs(),
@@ -32,7 +32,7 @@ const tokenizer_funs = {
     "Default": defaultTokenizer
 };
 
-const stemmers_funs = {
+const stemmerFuns = {
     "English": natural.PorterStemmer,
     "French": natural.PorterStemmerFr,
     "Italian": natural.PorterStemmerIt,
@@ -45,7 +45,7 @@ const stemmers_funs = {
     "Indonesian": natural.StemmerId,
 };
 
-const stopword_objs = {
+const stopwordObjs = {
     "Japanese": stopword.ja,
     "English": stopword.en,
     "Spanish": stopword.es,
@@ -63,18 +63,18 @@ const stopword_objs = {
 
 
 //To avoid duplicate operation of get keys.
-const support_lang_codes = Object.keys(code_obj);
-const tokenizers = Object.keys(tokenizer_funs);
-const stopwords = Object.keys(stopword_objs);
+const supportLangCodes = Object.keys(codeObj);
+const tokenizers = Object.keys(tokenizerFuns);
+const stopwords = Object.keys(stopwordObjs);
 
-function regulate_lang_code(code) {
-    return code in code_obj ? code_obj[code] : "Default"
+function regulateLangCode(code) {
+    return code in codeObj ? codeObj[code] : "Default"
 }
 
 function judge_type(types) {
-    let lang_type = "Default";
+    let langType = "Default";
     if (types.indexOf("Chinese") > -1) {
-        lang_type = "Chinese";
+        langType = "Chinese";
     }
     else {
         for (let key of tokenizers) {
@@ -83,22 +83,22 @@ function judge_type(types) {
             }
         }
     }
-    return lang_type;
+    return langType;
 }
 
 export default function (sentence) {
     //language Detect
-    let lang_type = franc(sentence,{only:support_lang_codes});
-    let possible_types = langjudge.langAllContain(sentence);
+    let langType = franc(sentence,{only:supportLangCodes});
+    let possibleTypes = langjudge.langAllContain(sentence);
     //This is the backup for some situations that the franc can not detect the language and return "und"
-    if (lang_type === "und" || possible_types.indexOf("Chinese") > -1) {
-        lang_type = judge_type(possible_types);
+    if (langType === "und" || possibleTypes.indexOf("Chinese") > -1) {
+        langType = judge_type(possibleTypes);
     } else {
-        lang_type = regulate_lang_code(lang_type);
+        langType = regulateLangCode(langType);
     }
     let tokens = [];
     try {
-        if (lang_type === "Chinese") {
+        if (langType === "Chinese") {
             let arr = segmentit.doSegment(sentence, {
                 stripPunctuation: true
             });
@@ -106,8 +106,8 @@ export default function (sentence) {
                 tokens.push(item.w);
             }
         } else {
-            if(lang_type in tokenizers){
-                tokens = tokenizer_funs[lang_type].tokenize(sentence);
+            if(langType in tokenizers){
+                tokens = tokenizerFuns[langType].tokenize(sentence);
             }else{
                 tokens = defaultTokenizer.tokenize(sentence);
             }
@@ -118,16 +118,16 @@ export default function (sentence) {
     }
     //Stopwords
     try{
-        if(lang_type in stopwords){
-            tokens = stopword.removeStopwords(tokens,stopword_objs[lang_type]);
+        if(langType in stopwords){
+            tokens = stopword.removeStopwords(tokens,stopwordObjs[langType]);
         }
     }catch (e) {
         console.error(e);
     }
     //Stemmers
     try {
-        if (lang_type in stemmers_funs) {
-            let stemmer = stemmers_funs[lang_type];
+        if (langType in stemmerFuns) {
+            let stemmer = stemmerFuns[langType];
             for (let k in tokens) {
                 tokens[k] = stemmer.stem(tokens[k]);
             }
@@ -143,6 +143,6 @@ export default function (sentence) {
             result[item] += 1;
         }
     }
-    //console.log(lang_type,result);
+    //console.log(langType,result);
     return result;
 }

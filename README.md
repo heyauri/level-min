@@ -2,6 +2,9 @@
 
 A light-weight full-text search library for the browser and Node.js, aimed to minimize the workload of developers in usage. Using LevelDB as storage backend.
 
+
+[![npm](https://img.shields.io/npm/v/level-min.svg?label=&logo=npm)](https://www.npmjs.com/package/level-min)
+
 - With a built-in text processing procedure: Tokenizer, Porter Stemmer and Stopwords filter.
 - Full-text search using TF-IDF algorithm.
 - Highly configurable index-schema to construct a more flexible inverted index.
@@ -30,9 +33,9 @@ min.put("Document1",{
     imgUrl:"http://just-for-example.url.com/img.jpg"
 },{
     key-weight:0,
-    value_weight_calc:true,
-    default_value_weight:0,
-    value_weights: { title: 5, content: 1 }
+    valueWeightCalc:true,
+    defaultValueWeight:0,
+    valueWeights: { title: 5, content: 1 }
 })
 
 min.put("example","A meaningless string.")
@@ -44,7 +47,7 @@ let result = await min.search("Introduction");
 
 ## API
 
-- <a href="#Min"><code><b>Min()</b> / min.<b>set_db()</b></code></a>
+- <a href="#Min"><code><b>Min()</b> / min.<b>setDB()</b></code></a>
 - <a href="#put"><code>min.<b>put()</b></code></a>
 - <a href="#del"><code>min.<b>del()</b></code></a>
 - <a href="#get"><code>min.<b>get()</b></code></a>
@@ -52,7 +55,7 @@ let result = await min.search("Introduction");
 
 <a name="Min"></a>
 
-### `Min(db_address,[options,])` / `min.set_db(db_address,[options,])`
+### `Min(dbAddress,[options,])` / `min.setDB(dbAddress,[options,])`
 Both of these functions will switch the leveldb instance inside `Min` to the given address.
 
 Using as ` const min = Min(location)` is  highly recommended.
@@ -101,10 +104,10 @@ The `key` should be string. The value may better be `String`, `Array` or `Object
 
 The optional `options` argument may contain:
 
-- `key_weight` (Number, default: `1`): If the value of given `key_weight` is less than or equal to zero(<=0), the tokens inside the input key will not be indexed.
-- `value_weight_calc` (boolean, default: `false`): If `false`, the tokens inside the value will not be counted. Switch it to `true` if it is needed.
-- `default_value_weight` (Number, default: `1`): If the value of given `value_weight_calc` is `true`, its value will be calculated as the default weights of tokens inside value.
-- `value_weights` (object, default: `{}`):  The values for those spec key/index when the value is an Array/Object. For example, the value is an object -> `{a:text, b:text,...}` and the `value_weights` is `{a:3}`, the tokens inside field `a` will be calculated as a token-frequency of 3, others' token-frequency will follow the `default_value_weight`.
+- `keyWeight` (Number, default: `1`): If the value of given `keyWeight` is less than or equal to zero(<=0), the tokens inside the input key will not be indexed.
+- `valueWeightCalc` (boolean, default: `false`): If `false`, the tokens inside the value will not be counted. Switch it to `true` if it is needed.
+- `defaultValueWeight` (Number, default: `1`): If the value of given `valueWeightCalc` is `true`, its value will be calculated as the default weights of tokens inside value.
+- `valueWeights` (object, default: `{}`):  The values for those spec key/index when the value is an Array/Object. For example, the value is an object -> `{a:text, b:text,...}` and the `valueWeights` is `{a:3}`, the tokens inside field `a` will be calculated as a token-frequency of 3, others' token-frequency will follow the `defaultValueWeight`.
 
 <a name="del"></a>
 

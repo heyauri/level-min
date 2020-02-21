@@ -4,23 +4,23 @@ const min = new Min("data");
 
 min.put("11",
     "this is a test of the language detect significant",
-    {"value_weight_calc":true}).then(info=>{
+    {"valueWeightCalc":true}).then(info=>{
         console.log(info);
 
 });
 min.put("This is a test of",
     "了不起的修仙模拟器 Jack  Tom love chicken...",
-    {"value_weight_calc":true}).then(info=>{
+    {"valueWeightCalc":true}).then(info=>{
     console.log(info);
 
 });
 min.put("1",
     "卧槽 这他妈的什么玩意呀",
-    {"value_weight_calc":true}).then(info=>{
-    console.log(info);
+    {"valueWeightCalc":true}).then(info=>{
+    //console.log(info);
     //min.get_all();
     min.get("1").then(info=>{
-        console.log(info);
+        //console.log(info);
     })
 });
 
@@ -28,4 +28,4 @@ min.search("卧槽了不起的修仙模拟器",10).then(res=>{
     console.log(res);
 });
 
-min.fix_doc_count();
+min.fix_docCount();
