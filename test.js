@@ -28,4 +28,4 @@ min.search("卧槽了不起的修仙模拟器",10).then(res=>{
     console.log(res);
 });
 
-min.fix_docCount();
+min.fixDocCount();

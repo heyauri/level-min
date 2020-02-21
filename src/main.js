@@ -251,7 +251,7 @@ class Min {
         let docCount = this.docCount;
         if (!docCount && docCount !== 0) {
             console.error("There are some internal errors inside the db about the docs' count, the PUT operation failed.");
-            console.error("Try this.fix_docCount()");
+            console.error("Try this.fixDocCount()");
             return Promise.reject(false);
         }
         let obj = await this.db.get(constructKey(docId)).catch(e => {
@@ -284,7 +284,7 @@ class Min {
         let docCount = this.docCount;
         if (!docCount && docCount !== 0) {
             console.error("There are some internal errors inside the db about the docs' count, the DEL operation failed.");
-            console.error("Try this.fix_docCount()");
+            console.error("Try this.fixDocCount()");
             return Promise.reject(false);
         }
         let obj = await this.db.get(constructKey(docId)).catch(e => {
@@ -409,7 +409,7 @@ class Min {
         }
     }
 
-    print_all() {
+    printAll() {
         this.db.createReadStream()
             .on('data', function (data) {
                 console.log(data.key, '=', data.value)
@@ -425,7 +425,7 @@ class Min {
             })
     }
 
-    fix_docCount(){
+    fixDocCount(){
         let docCount = 0;
         let pattern = /^0x002_/;
         let db=this.db;
