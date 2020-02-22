@@ -1,17 +1,17 @@
 # level-min
 
-A light-weight full-text search library for the browser and Node.js, aimed to minimize the workload of developers in usage. Using LevelDB as storage backend.
-[Chinese version](https://github.com/ruiyeah/level-min/blob/master/README_zh.md)
+一个针对browser和Node.js的轻量级全文搜索库，旨在最小化开发人员的使用工作量。使用LevelDB作为存储后端。
 
 [![npm](https://img.shields.io/npm/v/level-min.svg?label=&logo=npm)](https://www.npmjs.com/package/level-min)
 [![Node version](https://img.shields.io/node/v/level-min.svg)](https://www.npmjs.com/package/level-min)
 
-- With a built-in text processing procedure: Tokenizer, Porter Stemmer and Stopwords filter.
-- Full-text search using TF-IDF algorithm.
-- Highly configurable index-schema to construct a more flexible inverted index.
-- Multi-language support, including Chinese, English, Japanese, French, Itaian, Russian, Spanish, Portuguese, etc.
 
-## Installation
+- 具有内置的文本处理过程：标记器、波特词干分析器和Stopwords过滤器。
+- 使用TF-IDF算法进行全文搜索。
+- 高度可配置的索引模式，以构建更灵活的反向索引。
+- 支持多种语言，包括中文、英语、日语、法语、意大利语、俄语、西班牙语、葡萄牙语等。
+
+## 安装
 ```sh
 $ npm install level-min
 ```
@@ -57,7 +57,7 @@ let result = await min.search("Introduction");
 <a name="Min"></a>
 
 ### `Min(dbAddress,[options,])` / `min.setDB(dbAddress,[options,])`
-Both of these functions will switch the leveldb instance inside `Min` to the given address.
+这两个函数都将`Min`中的leveldb实例切换到给定地址。
 
 Using as ` const min = Min(location)` is  highly recommended.
 
