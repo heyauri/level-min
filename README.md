@@ -166,7 +166,13 @@ To solve this issue, a configurable language preference is now on the develop pl
 
 However, you can still use this package freely cause this problem just affects the performances not the accuracies.
 
+### What if you want to use a custom-tokenizer?
 
+A customizable tokenizer have already been supported. All you need to do is just call `min.setTokenizer(customTokenizer)`.
+
+<b>Notice:</b> the requirement of the custom-tokenizer are as followed :
+1) There should be a function named `tokenize()` inside, i.e. you should offer an Object like `{ tokenize: [Function: tokenize] }`.
+2) The tokenize function should finally return a Object be like `{ token : tf(Number), ... , token : tf}` or it may result in some unexpected errors.
 
 
 
