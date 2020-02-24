@@ -151,6 +151,6 @@ function tokenize(sentence) {
     return result;
 }
 
-export default {
+export  {
     tokenize
 }

@@ -3,7 +3,7 @@ import path from "path"
 import md5 from "md5"
 import deAsync from "deasync"
 import * as utils from "./utils.js"
-import tokenizer from "./tokenizer.js"
+import * as tokenizer from "./tokenizer.js"
 
 function constructIndex(index) {
     return "0x001_" + index.toString();
@@ -28,6 +28,7 @@ class Min {
             prev[obj[curr]]=curr;
             return prev;
         },{});
+        this.tokenizer = tokenizer;
     }
 
     setDB(dbAddress, options) {
@@ -61,6 +62,21 @@ class Min {
         } catch (e) {
             console.error("Leveldb setup failed at: " + dbAddress + " \nPlease check your dbAddress and options.");
             console.error(e);
+        }
+    }
+
+    setTokenizer(customTokenizer){
+        try{
+            let res = customTokenizer.tokenize("Hello world this is a test");
+            if(utils.isObject(res)){
+                this.tokenizer=customTokenizer;
+                console.log("The internal tokenizer have already switched to the custom one.")
+            }else {
+                console.error("The output from custom-tokenizer is not the required format. Setting fail.")
+            }
+        }catch (e) {
+            console.error(e);
+            console.error("Oops... The operation of switching the tokenizer have encountered an error.")
         }
     }
 
@@ -100,19 +116,19 @@ class Min {
         let tokens = {};
         let tempTokens = {};
         if (options["keyWeight"]) {
-            let tempTokens = tokenizer.tokenize(key);
+            let tempTokens = this.tokenizer.tokenize(key);
             utils.mergeTokens(tokens, tempTokens);
         }
         if (options["valueWeightCalc"]) {
             let defaultValueWeight = options["defaultValueWeight"];
             let valueWeights = options["valueWeights"];
             if (utils.isString(value)) {
-                tempTokens = tokenizer.tokenize(value);
+                tempTokens = this.tokenizer.tokenize(value);
                 utils.mergeTokens(tokens, tempTokens, defaultValueWeight);
             } else if (utils.isObject(value)) {
                 for (let key of Object.keys(value)) {
                     if (key in valueWeights || defaultValueWeight > 0) {
-                        tempTokens = tokenizer.tokenize(value[key]);
+                        tempTokens = this.tokenizer.tokenize(value[key]);
                         let weight = key in valueWeights ? valueWeights[key] : defaultValueWeight;
                         utils.mergeTokens(tokens, tempTokens, weight);
                     }
@@ -120,7 +136,7 @@ class Min {
             } else if (utils.isArray(value)) {
                 for (let i = 0; i < value.length; i++) {
                     if (i in valueWeights || defaultValueWeight > 0) {
-                        tempTokens = tokenizer.tokenize(value[i]);
+                        tempTokens = this.tokenizer.tokenize(value[i]);
                         let weight = i in valueWeights ? valueWeights[i] : defaultValueWeight;
                         utils.mergeTokens(tokens, tempTokens, weight);
                     }
@@ -387,7 +403,7 @@ class Min {
     }
     //Search the content by tf-idf.
     async search(content, topK) {
-        let tokens = tokenizer.tokenize(content);
+        let tokens = this.tokenizer.tokenize(content);
         let promiseArr = [];
         for (let token of Object.keys(tokens)) {
             promiseArr.push(this.searchIndex(token));

@@ -1,6 +1,9 @@
 const Min = require("./lib/main.js");
+const tokenizer = require("./lib/tokenizer.js");
 const utils =require("./lib/utils");
 const min = new Min("data");
+
+min.setTokenizer(tokenizer);
 
 min.put("11",
     "this is a test of the language detect significant",
