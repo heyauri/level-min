@@ -86,7 +86,11 @@ function judge_type(types) {
     return langType;
 }
 
-export default function (sentence) {
+function config(){
+    
+}
+
+function tokenize(sentence) {
     //language Detect
     let langType = franc(sentence,{only:supportLangCodes});
     let possibleTypes = langjudge.langAllContain(sentence);
@@ -145,4 +149,8 @@ export default function (sentence) {
     }
     //console.log(langType,result);
     return result;
+}
+
+export default {
+    tokenize
 }

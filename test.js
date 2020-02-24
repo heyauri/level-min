@@ -18,7 +18,7 @@ min.put("1",
     "卧槽 这他妈的什么玩意呀",
     {"valueWeightCalc":true}).then(info=>{
     //console.log(info);
-    //min.get_all();
+    min.printAll();
     min.get("1").then(info=>{
         //console.log(info);
     })

@@ -18,6 +18,16 @@ class Min {
         if (arguments.length > 0) {
             this.setDB(arguments[0], arguments[1]);
         }
+        let obj= this.optionsTable={
+            keyWeight:"kw",
+            valueWeightCalc:"vwc",
+            defaultValueWeight:"dvw",
+            valueWeights:"vw",
+        };
+        this.compressOptionsTable = Object.keys(obj).reduce((prev,curr)=>{
+            prev[obj[curr]]=curr;
+            return prev;
+        },{});
     }
 
     setDB(dbAddress, options) {
@@ -61,7 +71,7 @@ class Min {
     //        ["defaultValueWeight"] ->  the default weight of the tokens inside value
     //        ["valueWeights"] ->  The values for those spec key/index when the value is an Array/Object
     initOptions(options) {
-        if (!options) {
+        if (!options || !utils.isObject(options)) {
             options = {};
         }
         if (("keyWeight" in options) && !utils.isNumber(options["keyWeight"])) {
@@ -76,24 +86,33 @@ class Min {
         return options;
     }
 
+    compressOptions(options,decompress=false){
+        let res={};
+        let table = decompress? this.compressOptionsTable :this.optionsTable;
+        for(let key of Object.keys(options)){
+            if(key in table) res[table[key]] = options[key];
+        }
+        return res;
+    }
+
 
     getTokens(key, value, options) {
         let tokens = {};
         let tempTokens = {};
         if (options["keyWeight"]) {
-            let tempTokens = tokenizer(key);
+            let tempTokens = tokenizer.tokenize(key);
             utils.mergeTokens(tokens, tempTokens);
         }
         if (options["valueWeightCalc"]) {
             let defaultValueWeight = options["defaultValueWeight"];
             let valueWeights = options["valueWeights"];
             if (utils.isString(value)) {
-                tempTokens = tokenizer(value);
+                tempTokens = tokenizer.tokenize(value);
                 utils.mergeTokens(tokens, tempTokens, defaultValueWeight);
             } else if (utils.isObject(value)) {
                 for (let key of Object.keys(value)) {
                     if (key in valueWeights || defaultValueWeight > 0) {
-                        tempTokens = tokenizer(value[key]);
+                        tempTokens = tokenizer.tokenize(value[key]);
                         let weight = key in valueWeights ? valueWeights[key] : defaultValueWeight;
                         utils.mergeTokens(tokens, tempTokens, weight);
                     }
@@ -101,7 +120,7 @@ class Min {
             } else if (utils.isArray(value)) {
                 for (let i = 0; i < value.length; i++) {
                     if (i in valueWeights || defaultValueWeight > 0) {
-                        tempTokens = tokenizer(value[i]);
+                        tempTokens = tokenizer.tokenize(value[i]);
                         let weight = i in valueWeights ? valueWeights[i] : defaultValueWeight;
                         utils.mergeTokens(tokens, tempTokens, weight);
                     }
@@ -163,7 +182,7 @@ class Min {
             ops.push({
                 type: "put",
                 key: constructKey(docId),
-                value: JSON.stringify({k: key, v: JSON.stringify(value), o: JSON.stringify(options)})
+                value: JSON.stringify({k: key, v: JSON.stringify(value), o: JSON.stringify(this.compressOptions(options))})
             });
             ops.push({type: "put", key: "0x000_docCount", value: (this.docCount).toString()});
             return ops;
@@ -224,7 +243,7 @@ class Min {
             ops.push({
                 type: "put",
                 key: constructKey(docId),
-                value: JSON.stringify({k: key, v: JSON.stringify(value), o: JSON.stringify(options)})
+                value: JSON.stringify({k: key, v: JSON.stringify(value), o: JSON.stringify(this.compressOptions(options))})
             });
             return ops;
         }).catch(e => {
@@ -359,7 +378,7 @@ class Min {
                 key: obj["k"],
                 docId:docId,
                 value: JSON.parse(obj["v"]),
-                options: JSON.parse(obj["o"])
+                options: this.compressOptions(JSON.parse(obj["o"]),true)
             };
         } catch (e) {
             console.error("Oops...The Get operation is interrupted by an internal error.");
@@ -368,7 +387,7 @@ class Min {
     }
     //Search the content by tf-idf.
     async search(content, topK) {
-        let tokens = tokenizer(content);
+        let tokens = tokenizer.tokenize(content);
         let promiseArr = [];
         for (let token of Object.keys(tokens)) {
             promiseArr.push(this.searchIndex(token));
