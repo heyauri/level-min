@@ -26,9 +26,9 @@ min.cleanUpdate("1",
     {1:"卧槽 11111这他妈的什么玩意呀"},
     {"valueWeightCalc":true}).then(info=>{
     //console.log(info);
-    min.cleanGet("1").then(info=>{
+   /* min.cleanGet("1").then(info=>{
         console.log(info);
-    })
+    })*/
 });
 
 min.search("卧槽了不起的修仙模拟器",10).then(res=>{
@@ -36,3 +36,9 @@ min.search("卧槽了不起的修仙模拟器",10).then(res=>{
 });
 
 min.fixDocCount();
+
+min.cleanGet("1122").then(info=>{
+    console.log(info);
+}).catch(e=>{
+    console.log(e)
+});

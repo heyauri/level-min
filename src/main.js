@@ -207,7 +207,7 @@ class Min {
             return e;
         });
         return new Promise((resolve, reject) => {
-            if (ops instanceof EvalError) {
+            if (ops instanceof Error) {
                 this.docCount -= 1;
                 reject(ops);
             }
@@ -267,7 +267,7 @@ class Min {
             return e;
         });
         return new Promise((resolve, reject) => {
-            if (ops instanceof EvalError) {
+            if (ops instanceof Error) {
                 reject(ops);
             }
             this.db.batch(ops).then(info => {
@@ -385,7 +385,7 @@ class Min {
                     return e;
                 });
                 return new Promise((resolve, reject) => {
-                    if (ops instanceof EvalError) {
+                    if (ops instanceof Error) {
                         this.docCount += 1;
                         reject(ops);
                     }
@@ -411,7 +411,7 @@ class Min {
         let obj = await this.db.get(constructKey(docId)).catch(e => {
                 return e;
         });
-        if (obj instanceof EvalError) return Promise.reject(obj);
+        if (obj instanceof Error) return Promise.reject(obj);
         try {
             obj = JSON.parse(obj);
             return {
@@ -432,7 +432,7 @@ class Min {
         let obj = await this.db.get(constructKey(docId)).catch(e => {
             return e;
         });
-        if (obj instanceof EvalError) return Promise.reject(obj);
+        if (obj instanceof Error) return Promise.reject(obj);
         try {
             obj = JSON.parse(obj);
             return JSON.parse(obj["v"])
@@ -478,7 +478,7 @@ class Min {
         }).catch(e => {
             return e;
         });
-        if (results instanceof EvalError) {
+        if (results instanceof Error) {
             return Promise.reject(results);
         }else{
             return Promise.resolve(results);
