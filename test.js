@@ -1,7 +1,17 @@
 const Min = require("./lib/main.js");
 const tokenizer = require("./lib/tokenizer.js");
-const utils =require("./lib/utils");
+const utils = require("./lib/utils");
 const min = new Min("data");
+
+
+tokenizer.configLanguages(["Chinese","English","Japanese","Spanish","Russian","Italian"]);
+
+tokenizer.setCustomStopwords(["avi","1080"]);
+
+console.log(tokenizer.tokenize("Happy.Death.Day.2U.2019.WEB-DLRip_[scarabey.org].avi"));
+
+
+/*
 
 min.setTokenizer(tokenizer);
 
@@ -17,18 +27,22 @@ min.put("This is a test of",
     console.log(info);
 
 });
-
-/*min.put("1",
+min.put("1",
     "卧槽221这他妈的什么玩意呀",
     {"valueWeightCalc":true})
+
+
+
+
 */
+/*
 min.cleanUpdate("1",
     {1:"卧槽 11111这他妈的什么玩意呀"},
     {"valueWeightCalc":true}).then(info=>{
     //console.log(info);
-   /* min.cleanGet("1").then(info=>{
+    min.cleanGet("1").then(info=>{
         console.log(info);
-    })*/
+    })
 });
 
 min.search("卧槽了不起的修仙模拟器",10).then(res=>{
@@ -42,3 +56,5 @@ min.cleanGet("1122").then(info=>{
 }).catch(e=>{
     console.log(e)
 });
+
+*/

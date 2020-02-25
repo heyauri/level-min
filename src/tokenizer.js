@@ -3,6 +3,7 @@ import langjudge from "langjudge"
 import natural from "natural"
 import {Segment, useDefault} from 'segmentit';
 import stopword from "stopword"
+import * as utils from "./utils.js"
 
 
 const segmentit = useDefault(new Segment());
@@ -14,6 +15,11 @@ const codeObj = {
     "swe": "Swedish", "ita": "Italian", "pol": "Polish", "por": "Portuguese",
     "nld": "Dutch", "ind": "Indonesian"
 };
+
+const nameToCode = Object.keys(codeObj).reduce((prev, curr) => {
+    prev[codeObj[curr]] = curr;
+    return prev;
+}, {});
 
 //Don't Change the sequence. It is related to the language-type-detect function.
 const tokenizerFuns = {
@@ -63,7 +69,8 @@ const stopwordObjs = {
 
 
 //To avoid duplicate operation of get keys.
-const supportLangCodes = Object.keys(codeObj);
+let supportLangCodes = Object.keys(codeObj);
+let supportLangNames = Object.keys(nameToCode);
 const tokenizers = Object.keys(tokenizerFuns);
 const stopwords = Object.keys(stopwordObjs);
 
@@ -86,13 +93,9 @@ function judge_type(types) {
     return langType;
 }
 
-function config(){
-    
-}
-
-function tokenize(sentence) {
+function langTypeDetect(sentence) {
     //language Detect
-    let langType = franc(sentence,{only:supportLangCodes});
+    let langType = franc(sentence, {only: supportLangCodes});
     let possibleTypes = langjudge.langAllContain(sentence);
     //This is the backup for some situations that the franc can not detect the language and return "und"
     if (langType === "und" || possibleTypes.indexOf("Chinese") > -1) {
@@ -100,6 +103,42 @@ function tokenize(sentence) {
     } else {
         langType = regulateLangCode(langType);
     }
+    return langType
+}
+
+function configLanguages(langList) {
+    let newCodes = [];
+    let newLangs = [];
+    for (let lang of langList) {
+        if (lang in supportLangNames) {
+            newLangs.push(lang);
+            newCodes.push(nameToCode[lang]);
+        }
+    }
+    supportLangNames = newLangs;
+    supportLangCodes = newCodes;
+}
+
+let customStopwordExist = false;
+let customStopwords = [];
+
+function setCustomStopwords(stopwords) {
+    if (utils.isArray(stopwords)) {
+        if (stopwords.length > 0) {
+            customStopwordExist = true;
+            customStopwords = stopwords;
+        } else {
+            customStopwordExist = false;
+        }
+    }
+    else {
+        customStopwordExist = false;
+    }
+}
+
+
+function tokenize(sentence) {
+    let langType = langTypeDetect(sentence);
     let tokens = [];
     try {
         if (langType === "Chinese") {
@@ -110,9 +149,9 @@ function tokenize(sentence) {
                 tokens.push(item.w);
             }
         } else {
-            if(langType in tokenizers){
+            if (langType in tokenizers) {
                 tokens = tokenizerFuns[langType].tokenize(sentence);
-            }else{
+            } else {
                 tokens = defaultTokenizer.tokenize(sentence);
             }
         }
@@ -120,14 +159,22 @@ function tokenize(sentence) {
         console.error(e);
         tokens = defaultTokenizer.tokenize(sentence);
     }
+
+    tokens = tokens.map(token => {
+        return token.trim().toLowerCase();
+    });
     //Stopwords
-    try{
-        if(langType in stopwords){
-            tokens = stopword.removeStopwords(tokens,stopwordObjs[langType]);
+    try {
+        if (langType in stopwords) {
+            tokens = stopword.removeStopwords(tokens, stopwordObjs[langType]);
         }
-    }catch (e) {
+        if (customStopwordExist) {
+            tokens = stopword.removeStopwords(tokens, customStopwords);
+        }
+    } catch (e) {
         console.error(e);
     }
+
     //Stemmers
     try {
         if (langType in stemmerFuns) {
@@ -151,6 +198,9 @@ function tokenize(sentence) {
     return result;
 }
 
-export  {
-    tokenize
+export {
+    tokenize,
+    configLanguages,
+    langTypeDetect,
+    setCustomStopwords
 }
