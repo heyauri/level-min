@@ -17,13 +17,17 @@ min.put("This is a test of",
     console.log(info);
 
 });
-min.put("1",
-    "卧槽 这他妈的什么玩意呀",
+
+/*min.put("1",
+    "卧槽221这他妈的什么玩意呀",
+    {"valueWeightCalc":true})
+*/
+min.cleanUpdate("1",
+    {1:"卧槽 11111这他妈的什么玩意呀"},
     {"valueWeightCalc":true}).then(info=>{
     //console.log(info);
-    min.printAll();
-    min.get("1").then(info=>{
-        //console.log(info);
+    min.cleanGet("1").then(info=>{
+        console.log(info);
     })
 });
 

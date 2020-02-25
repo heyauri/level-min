@@ -311,8 +311,32 @@ class Min {
         } catch (e) {
             return e;
         }
+    }
+
+    static getDocId(key){
+        return md5(key);
+    }
+
+    // just update the value inside without reindexing
+    // It is a very dangerous operation: some indexes may remain till the world's end.
+    async cleanUpdate(key,value) {
+        let docId = md5(key);
+        let obj = await this.db.get(constructKey(docId)).catch(e => {
+            if (e.type === "NotFoundError") {
+                return false;
+            }
+        });
+        if (!obj) return Promise.reject(key.toString()+" is not exist inside the db.");
+        try {
+            obj = JSON.parse(obj);
+            obj["v"] = JSON.stringify(value);
+            return await this.db.put(constructKey(docId),JSON.stringify(obj));
+        }catch (e) {
+            return e;
+        }
 
     }
+
 
     async del(key) {
         let docId = md5(key);
@@ -401,6 +425,23 @@ class Min {
             return e;
         }
     }
+
+    // only focus on the value related to the key
+    async cleanGet(key , hash=false){
+        let docId = hash? key:md5(key);
+        let obj = await this.db.get(constructKey(docId)).catch(e => {
+            return e;
+        });
+        if (obj instanceof EvalError) return Promise.reject(obj);
+        try {
+            obj = JSON.parse(obj);
+            return JSON.parse(obj["v"])
+        } catch (e) {
+            console.error("Oops...The Get operation is interrupted by an internal error.");
+            return e;
+        }
+    }
+
     //Search the content by tf-idf.
     async search(content, topK) {
         let tokens = this.tokenizer.tokenize(content);
