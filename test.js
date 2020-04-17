@@ -1,14 +1,14 @@
 const Min = require("./lib/main.js");
-const tokenizer = require("./lib/tokenizer.js");
 const utils = require("./lib/utils");
 const min = new Min("data");
 
+let tokenizer = min.tokenizer;
 
-tokenizer.configLanguages(["Chinese","English","Japanese","Spanish","Russian","Italian"]);
+min.tokenizer.configLanguages(["Chinese","English","Japanese","Spanish","Russian","Italian"]);
 
-tokenizer.setCustomStopwords(["avi","1080"]);
+min.tokenizer.setCustomStopwords(["avi","1080"]);
 
-console.log(tokenizer.tokenize("Happy.Death.Day.2U.2019.WEB-DLRip_[scarabey.org].avi"));
+console.log(min.tokenizer.tokenize("Happy.Death.Day.2U.2019.WEB-DLRip_[scarabey.org].avi"));
 
 
 /*

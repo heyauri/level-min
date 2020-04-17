@@ -1,6 +1,6 @@
 # level-min
 
-A light-weight full-text search library for the browser and Node.js, aimed to minimize the workload of developers in usage. Using LevelDB as storage backend.
+💡 A light-weight full-text search library for the browser and Node.js, aimed to minimize the workload of developers in usage. Using LevelDB as storage backend.
 [Chinese version](https://github.com/ruiyeah/level-min/blob/master/README_zh.md)
 
 [![npm](https://img.shields.io/npm/v/level-min.svg?label=&logo=npm)](https://www.npmjs.com/package/level-min)
@@ -53,6 +53,7 @@ let result = await min.search("Introduction");
 - <a href="#del"><code>min.<b>del()</b></code></a>
 - <a href="#get"><code>min.<b>get()</b></code></a>
 - <a href="#search"><code>min.<b>search()</b></code></a>
+- <a href="#tokenizer">Setting of tokenizer</a>
 
 <a name="Min"></a>
 
@@ -148,6 +149,49 @@ min.search("Shakespeare").then(results=>{
     //execption
 })
 ```
+
+<a name="tokenizer"></a>
+
+### Setting of the Integrated Tokenizer
+
+A serious of APIs are offered to let the developers customize there own Tokenizer, Stopwords and Stemmer.
+
+```js
+min.tokenizer.setCustomStopwords(["avi","1080"]);
+```
+This function, `min.tokenizer.setCustomStopwords()`, will accept an array of stopwords which will play a role as token-filter in the following steps.
+
+
+```js
+min.tokenizer.setCustomTokenizer(tokenizer);
+```
+`min.tokenizer.setCustomTokenizer()` will accept an object that with a function named `tokenize()`
+that can split the input sentence into an array of tokens. Or an error will be logged in console.
+
+
+```js
+min.tokenizer.setCustomStemmer(stemmer);
+```
+`min.tokenizer.setCustomStemmer()` will accept an object that with a function named `stem()`
+that accept a token and return a processed string. Or an error will be logged in console.
+
+If the develper want to switch the tokenizer or the stemmer back to the integrated one, `min.tokenizer.configTokenizer()` can be used.
+
+An example:
+```js
+min.tokenizer.configTokenizer({
+    tokenizer: true,
+    stemmer: true,
+    stopword: true,
+    customTokenizer: false,
+    customStopword: false,
+    customStemmer: false
+});
+```
+
+When the stemmer and stopword options switch to false, the Text Processing Procedure will not contain these procedures anymore.
+
+<b>Warning:</b> the modification of the attributes in the above configuration can result in an unexpected and serious consequences. So I advice that the option `tokenizer` should always be `true`.
 
 In the following version, a cosine similarity is on plan.
 

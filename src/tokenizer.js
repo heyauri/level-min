@@ -67,6 +67,16 @@ const stopwordObjs = {
     "Chinese": stopword.zh
 };
 
+// more custom setting
+let tokenizerConfig = {
+    tokenizer: true,
+    stemmer: true,
+    stopword: true,
+    customTokenizer: false,
+    customStopword: false,
+    customStemmer: false
+};
+
 
 //To avoid duplicate operation of get keys.
 let supportLangCodes = Object.keys(codeObj);
@@ -119,20 +129,55 @@ function configLanguages(langList) {
     supportLangCodes = newCodes;
 }
 
-let customStopwordExist = false;
-let customStopwords = [];
+function configTokenizer(config) {
+    for (let key of Object.keys(config)) {
+        if (key in tokenizerConfig ) {
+            tokenizerConfig[key] = config[key];
+        }
+    }
+}
+
+let customStopwords, customTokenizer, customStemmer;
+
+function setCustomTokenizer(tokenizer) {
+    try {
+        let res = tokenizer.tokenize("Hello world this is a test");
+        if (utils.isObject(res)) {
+            customTokenizer = tokenizer;
+            tokenizerConfig.customTokenizer = true;
+            console.log("The internal tokenizer have already switched to the custom one.")
+        } else {
+            console.error("The output from custom-tokenizer is not the required format. Setting fail.")
+        }
+    } catch (e) {
+        console.error(e);
+        console.error("Oops... The operation of switching the tokenizer have encountered an error.")
+    }
+}
 
 function setCustomStopwords(stopwords) {
     if (utils.isArray(stopwords)) {
         if (stopwords.length > 0) {
-            customStopwordExist = true;
+            tokenizerConfig.customStopword = true;
             customStopwords = stopwords;
-        } else {
-            customStopwordExist = false;
         }
     }
-    else {
-        customStopwordExist = false;
+}
+
+
+function setCustomStemmer(stemmer) {
+    try {
+        let res = stemmer.stem("Hello world this is a test");
+        if (utils.isString(res)) {
+            customStemmer = stemmer;
+            tokenizerConfig.customStemmer = true;
+            console.log("The internal stemmer have already switched to the custom one.")
+        } else {
+            console.error("The output from custom-stemmer is not the required format. Setting fail.")
+        }
+    } catch (e) {
+        console.error(e);
+        console.error("Oops... The operation of switching the stemmer have encountered an error.")
     }
 }
 
@@ -141,7 +186,9 @@ function tokenize(sentence) {
     let langType = langTypeDetect(sentence);
     let tokens = [];
     try {
-        if (langType === "Chinese") {
+        if (tokenizerConfig.customTokenizer) {
+            tokens = customTokenizer.tokenize(sentence)
+        } else if (langType === "Chinese") {
             let arr = segmentit.doSegment(sentence, {
                 stripPunctuation: true
             });
@@ -168,7 +215,7 @@ function tokenize(sentence) {
         if (langType in stopwords) {
             tokens = stopword.removeStopwords(tokens, stopwordObjs[langType]);
         }
-        if (customStopwordExist) {
+        if (tokenizerConfig.customStopword) {
             tokens = stopword.removeStopwords(tokens, customStopwords);
         }
     } catch (e) {
@@ -177,7 +224,12 @@ function tokenize(sentence) {
 
     //Stemmers
     try {
-        if (langType in stemmerFuns) {
+        if (tokenizerConfig.customStemmer){
+            for (let k in tokens) {
+                tokens[k] = customStemmer.stem(tokens[k]);
+            }
+        }
+        else if (langType in stemmerFuns) {
             let stemmer = stemmerFuns[langType];
             for (let k in tokens) {
                 tokens[k] = stemmer.stem(tokens[k]);
@@ -202,5 +254,8 @@ export {
     tokenize,
     configLanguages,
     langTypeDetect,
-    setCustomStopwords
+    setCustomStopwords,
+    setCustomTokenizer,
+    setCustomStemmer,
+    configTokenizer
 }

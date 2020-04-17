@@ -65,21 +65,6 @@ class Min {
         }
     }
 
-    setTokenizer(customTokenizer){
-        try{
-            let res = customTokenizer.tokenize("Hello world this is a test");
-            if(utils.isObject(res)){
-                this.tokenizer=customTokenizer;
-                console.log("The internal tokenizer have already switched to the custom one.")
-            }else {
-                console.error("The output from custom-tokenizer is not the required format. Setting fail.")
-            }
-        }catch (e) {
-            console.error(e);
-            console.error("Oops... The operation of switching the tokenizer have encountered an error.")
-        }
-    }
-
     // Options -> a schema that contain the rules of token-frequency calculation.
     //        ["keyWeight"] -> the default weight of the tokens inside key
     //        ["valueWeightCalc"] -> if the token inside the value will be counted or not?
