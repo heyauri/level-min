@@ -1,6 +1,6 @@
 # level-min
 
-💡 A light-weight full-text search library for the browser and Node.js, aimed to minimize the workload of developers in usage. Using LevelDB as storage backend.
+💡 A light-weight full-text search library for Node.js, aimed to minimize the workload of developers in usage. Using LevelDB as storage backend.
 [Chinese version](https://github.com/ruiyeah/level-min/blob/master/README_zh.md)
 
 [![npm](https://img.shields.io/npm/v/level-min.svg?label=&logo=npm)](https://www.npmjs.com/package/level-min)
@@ -152,7 +152,7 @@ min.search("Shakespeare").then(results=>{
 
 <a name="tokenizer"></a>
 
-#### What if you want to use some customized text processing components rather than the Integrated one?
+### What if you want to use some customized text processing components rather than the integrated one?
 
 A serious of APIs are offered to let the developers customize there own Tokenizer, Stopwords and Stemmer.
 
@@ -191,7 +191,15 @@ min.tokenizer.configTokenizer({
 
 When the stemmer and stopword options switch to false, the Text Processing Procedure will not contain these procedures anymore.
 
-<b>Warning:</b> the modification of the attributes in the above configuration can result in an unexpected and serious consequences. So I advice that the option `tokenizer` should always be `true`.
+<b>Warning:</b> the modification of the attributes in the above configuration can result in an unexpected and serious consequences. So I strongly advice that the option `tokenizer` should always be `true`.
+
+## Develop Plan
+
+- [x] TF-IDF Similarity based full text search
+- [x] Integrated Text Processing Procedure: Tokenizer, Porter Stemmer and Stopwords filter
+- [x] Direct operation on the raw leveldb
+- [x] Support for custom text processing component
+- [] Support for Cosine Similarity
 
 In the following version, a cosine similarity is on plan.
 
