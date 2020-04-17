@@ -193,16 +193,13 @@ When the stemmer and stopword options switch to false, the Text Processing Proce
 
 <b>Warning:</b> the modification of the attributes in the above configuration can result in an unexpected and serious consequences. So I strongly advice that the option `tokenizer` should always be `true`.
 
-## Develop Plan
+## ✨ Develop Plan
 
 - [x] TF-IDF Similarity based full text search
 - [x] Integrated Text Processing Procedure: Tokenizer, Porter Stemmer and Stopwords filter
 - [x] Direct operation on the raw leveldb
 - [x] Support for custom text processing component
 - [] Support for Cosine Similarity
-
-In the following version, a cosine similarity is on plan.
-
 
 <a name="textProcessProcedure"></a>
 
