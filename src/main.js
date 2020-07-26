@@ -428,9 +428,10 @@ class Min {
     }
 
     //Search the content by tf-idf.
-    async search(content, topK) {
+    async search(content, topK,ops) {
         let tokens = this.tokenizer.tokenize(content);
         let promiseArr = [];
+        let options = ops || {cosineSimilarity:true};
         for (let token of Object.keys(tokens)) {
             promiseArr.push(this.searchIndex(token));
         }
@@ -457,6 +458,12 @@ class Min {
             return await Promise.all(promiseArr).then(res=>{
                 for(let obj of res){
                     obj["score"] = docs[obj["docId"]];
+                    // simply apply cosine-similarity
+                    if(options["cosineSimilarity"]){
+                        let resTokens = this.getTokens(obj["key"],obj["value"],obj["options"])
+                        let cosValue = Math.abs(utils.cosineSimilarity(tokens,resTokens));
+                        obj["score"] = Math.sqrt(cosValue)*obj["score"];
+                    }
                 }
                 return res.sort((a,b)=>{ return b["score"] - a["score"]});
             });

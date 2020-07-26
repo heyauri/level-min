@@ -199,7 +199,7 @@ When the stemmer and stopword options switch to false, the Text Processing Proce
 - [x] Integrated Text Processing Procedure: Tokenizer, Porter Stemmer and Stopwords filter
 - [x] Direct operation on the raw leveldb
 - [x] Support for custom text processing component
-- [ ] Support for Cosine Similarity
+- [x] Support for Cosine Similarity
 
 <a name="textProcessProcedure"></a>
 

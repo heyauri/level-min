@@ -71,3 +71,17 @@ export function sortByValue(obj, des = true) {
             return prev
         }, {});
 }
+
+export function cosineSimilarity(oa,ob){
+    let upper=0,left=0,right=0;
+    for(let key of Object.keys(oa)){
+        if(key in ob){
+            upper += oa[key]*ob[key];
+        }
+        left += oa[key]**2;
+    }
+    for(let key of Object.keys(ob)){
+        right += ob[key]**2;
+    }
+    return upper/(Math.sqrt(left)*Math.sqrt(right));
+}
