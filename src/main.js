@@ -427,11 +427,12 @@ class Min {
         }
     }
 
-    //Search the content by tf-idf.
-    async search(content, topK,ops) {
+    //Search the content by tf-idf & cosine-similarity.
+    async search(content, ops) {
         let tokens = this.tokenizer.tokenize(content);
         let promiseArr = [];
         let options = ops || {cosineSimilarity:true};
+        let topK = options["topK"] || 0;
         for (let token of Object.keys(tokens)) {
             promiseArr.push(this.searchIndex(token));
         }

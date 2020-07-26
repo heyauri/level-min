@@ -28,7 +28,7 @@ min.put("1",
     {"valueWeightCalc":true})
 
 
-min.search("卧槽了不起的修仙模拟器",10).then(res=> {
+min.search("卧槽了不起的修仙模拟器", {cosineSimilarity:true}).then(res=> {
     console.log(res);
 });
 
