@@ -85,3 +85,15 @@ export function cosineSimilarity(oa,ob){
     }
     return upper/(Math.sqrt(left)*Math.sqrt(right));
 }
+
+export function stringify(input) {
+    return isString(input) ? input : JSON.stringify(input);
+}
+
+export function parse(input) {
+    try{
+        return JSON.parse(input);
+    }catch (e) {
+        return input;
+    }
+}

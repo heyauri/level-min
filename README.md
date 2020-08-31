@@ -1,15 +1,22 @@
 # level-min
 
-💡 A light-weight full-text search library for Node.js, aimed to minimize the workload of developers in usage. Using LevelDB as storage backend.
-[Chinese version](https://github.com/ruiyeah/level-min/blob/master/README_zh.md)
+💡 A light-weight full-text search library for Node.js, aimed to minimize the workload of developers. Using LevelDB as storage backend.
+[Chinese version Readme](https://github.com/ruiyeah/level-min/blob/master/README_zh.md)
 
 [![npm](https://img.shields.io/npm/v/level-min.svg?label=&logo=npm)](https://www.npmjs.com/package/level-min)
 [![Node version](https://img.shields.io/node/v/level-min.svg)](https://www.npmjs.com/package/level-min)
 
 - With a built-in text processing procedure: Tokenizer, Porter Stemmer and Stopwords filter.
-- Full-text search using TF-IDF algorithm.
+- Full-text search using TF-IDF algorithm and Cosine Similarity.
 - Highly configurable index-schema to construct a more flexible inverted index.
-- Multi-language support, including Chinese, English, Japanese, French, Itaian, Russian, Spanish, Portuguese, etc.
+- Multi-language support, including Chinese, English, Japanese, French, Italian, Russian, Spanish, Portuguese, etc.
+
+This package is provided for developers who would like to deploy their node.js based application on an entry-level server/VPS.
+
+Ease of deployment and light-weight are all the ambitions of this package.
+
+If you require  more features for a more complex application, maybe `ElasticSearch` will be a better potential solution.
+
 
 ## Installation
 ```sh

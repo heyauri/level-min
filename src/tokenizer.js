@@ -183,6 +183,14 @@ function setCustomStemmer(stemmer) {
 
 
 function tokenize(sentence) {
+    if(typeof sentence !== "string")
+    {
+        if (utils.isNumber(sentence)) {
+            return sentence.toString();
+        }else{
+            sentence = JSON.stringify(sentence);
+        }
+    }
     let langType = langTypeDetect(sentence);
     let tokens = [];
     try {

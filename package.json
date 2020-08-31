@@ -27,19 +27,19 @@
   },
   "homepage": "https://github.com/ruiyeah/level-min#readme",
   "dependencies": {
-    "deasync": "^0.1.19",
+    "deasync": "^0.1.20",
     "franc": "^5.0.0",
     "langjudge": "^0.3.0",
-    "level": "^6.0.0",
-    "md5": "^2.2.1",
+    "level": "^6.0.1",
+    "md5": "^2.3.0",
     "natural": "^0.6.3",
     "segmentit": "^2.0.3",
-    "stopword": "^0.3.4"
+    "stopword": "^0.3.5"
   },
   "devDependencies": {
-    "@babel/cli": "^7.8.3",
-    "@babel/core": "^7.8.3",
-    "@babel/plugin-transform-runtime": "^7.8.3",
-    "@babel/preset-env": "^7.8.3"
+    "@babel/cli": "^7.10.5",
+    "@babel/core": "^7.11.4",
+    "@babel/plugin-transform-runtime": "^7.11.0",
+    "@babel/preset-env": "^7.11.0"
   }
 }

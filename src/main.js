@@ -105,8 +105,8 @@ class Min {
             utils.mergeTokens(tokens, tempTokens);
         }
         if (options["valueWeightCalc"]) {
-            let defaultValueWeight = options["defaultValueWeight"];
-            let valueWeights = options["valueWeights"];
+            let defaultValueWeight = options["defaultValueWeight"]||1;
+            let valueWeights = options["valueWeights"]||{};
             if (utils.isString(value)) {
                 tempTokens = this.tokenizer.tokenize(value);
                 utils.mergeTokens(tokens, tempTokens, defaultValueWeight);
@@ -185,8 +185,8 @@ class Min {
                 key: constructKey(docId),
                 value: JSON.stringify({
                     k: key,
-                    v: JSON.stringify(value),
-                    o: JSON.stringify(this.compressOptions(options))
+                    v: value,
+                    o: this.compressOptions(options)
                 })
             });
             ops.push({type: "put", key: "0x000_docCount", value: (this.docCount).toString()});
@@ -250,8 +250,8 @@ class Min {
                 key: constructKey(docId),
                 value: JSON.stringify({
                     k: key,
-                    v: JSON.stringify(value),
-                    o: JSON.stringify(this.compressOptions(options))
+                    v: value,
+                    o: this.compressOptions(options)
                 })
             });
             return ops;
@@ -293,8 +293,6 @@ class Min {
                 return await this.create(key, value, options)
             } else {
                 obj = JSON.parse(obj);
-                obj["v"] = JSON.parse(obj["v"]);
-                obj["o"] = JSON.parse(obj["o"]);
                 if (key === obj["k"] && value === obj["v"] && options === obj["o"]) {
                     return true;
                 } else {
@@ -322,7 +320,6 @@ class Min {
         if (!obj) return Promise.reject(key.toString() + " is not exist inside the db.");
         try {
             obj = JSON.parse(obj);
-            obj["v"] = JSON.stringify(value);
             return await this.db.put(constructKey(docId), JSON.stringify(obj));
         } catch (e) {
             return e;
@@ -350,8 +347,8 @@ class Min {
             } else {
                 obj = JSON.parse(obj);
                 this.docCount -= 1;
-                let value = JSON.parse(obj["v"]);
-                let options = JSON.parse(obj["o"]);
+                let value = obj["v"];
+                let options = obj["o"];
                 let tokens = this.getTokens(key, value, options);
                 let promiseArr = [];
                 for (let token of Object.keys(tokens)) {
@@ -410,8 +407,8 @@ class Min {
             return {
                 key: obj["k"],
                 docId: docId,
-                value: JSON.parse(obj["v"]),
-                options: this.compressOptions(JSON.parse(obj["o"]), true)
+                value: obj["v"],
+                options: this.compressOptions(obj["o"], true)
             };
         } catch (e) {
             console.error("Oops...The Get operation is interrupted by an internal error.");
@@ -428,7 +425,7 @@ class Min {
         if (obj instanceof Error) return Promise.reject(obj);
         try {
             obj = JSON.parse(obj);
-            return JSON.parse(obj["v"])
+            return obj["v"];
         } catch (e) {
             console.error("Oops...The Get operation is interrupted by an internal error.");
             return e;
