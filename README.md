@@ -146,14 +146,14 @@ min.get("example").then(info=>{
 <a name="search"></a>
 
 ### `min.search(content, [options,])`
-`search()` function will tokenize the input and then query them inside the db. If mutiple results are returned, their scores will be calculated using <b>tf-idf</b> algorithm. The top-k of the results sorted by their scores
+`search()` function will tokenize the input and then query them inside the db. If mutiple results are returned, their scores will be calculated using <b>tf-idf</b> algorithm and <b>Cosine Similarity</b>. The top-k of the results sorted by their scores
  in a descending order will finally be returned via promise.
 
 An example for the search:
 ```js
 let options={
     topK:10, // when we only want the top 10 results
-    cosineSimilarity:true // if you want to combine the tf-idf and cosine similarity
+    cosineSimilarity:true // if you want to combine the tf-idf and cosine similarity , false :tf-idf alone , true: combine
 }
 min.search("Shakespeare").then(results=>{
     // results in order
