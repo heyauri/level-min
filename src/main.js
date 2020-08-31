@@ -18,16 +18,16 @@ class Min {
         if (arguments.length > 0) {
             this.setDB(arguments[0], arguments[1]);
         }
-        let obj= this.optionsTable={
-            keyWeight:"kw",
-            valueWeightCalc:"vwc",
-            defaultValueWeight:"dvw",
-            valueWeights:"vw",
+        let obj = this.optionsTable = {
+            keyWeight: "kw",
+            valueWeightCalc: "vwc",
+            defaultValueWeight: "dvw",
+            valueWeights: "vw",
         };
-        this.compressOptionsTable = Object.keys(obj).reduce((prev,curr)=>{
-            prev[obj[curr]]=curr;
+        this.compressOptionsTable = Object.keys(obj).reduce((prev, curr) => {
+            prev[obj[curr]] = curr;
             return prev;
-        },{});
+        }, {});
         this.tokenizer = tokenizer;
     }
 
@@ -87,11 +87,11 @@ class Min {
         return options;
     }
 
-    compressOptions(options,decompress=false){
-        let res={};
-        let table = decompress? this.compressOptionsTable :this.optionsTable;
-        for(let key of Object.keys(options)){
-            if(key in table) res[table[key]] = options[key];
+    compressOptions(options, decompress = false) {
+        let res = {};
+        let table = decompress ? this.compressOptionsTable : this.optionsTable;
+        for (let key of Object.keys(options)) {
+            if (key in table) res[table[key]] = options[key];
         }
         return res;
     }
@@ -126,10 +126,10 @@ class Min {
                         utils.mergeTokens(tokens, tempTokens, weight);
                     }
                 }
-            } else if (utils.isNumber(value) || utils.isBoolean(value)){
+            } else if (utils.isNumber(value) || utils.isBoolean(value)) {
                 try {
-                    tokens[value.toString()]= defaultValueWeight;
-                }catch (e) {
+                    tokens[value.toString()] = defaultValueWeight;
+                } catch (e) {
                     console.error(e);
                 }
             }
@@ -183,7 +183,11 @@ class Min {
             ops.push({
                 type: "put",
                 key: constructKey(docId),
-                value: JSON.stringify({k: key, v: JSON.stringify(value), o: JSON.stringify(this.compressOptions(options))})
+                value: JSON.stringify({
+                    k: key,
+                    v: JSON.stringify(value),
+                    o: JSON.stringify(this.compressOptions(options))
+                })
             });
             ops.push({type: "put", key: "0x000_docCount", value: (this.docCount).toString()});
             return ops;
@@ -244,7 +248,11 @@ class Min {
             ops.push({
                 type: "put",
                 key: constructKey(docId),
-                value: JSON.stringify({k: key, v: JSON.stringify(value), o: JSON.stringify(this.compressOptions(options))})
+                value: JSON.stringify({
+                    k: key,
+                    v: JSON.stringify(value),
+                    o: JSON.stringify(this.compressOptions(options))
+                })
             });
             return ops;
         }).catch(e => {
@@ -298,25 +306,25 @@ class Min {
         }
     }
 
-    static getDocId(key){
+    static getDocId(key) {
         return md5(key);
     }
 
     // just update the value inside without reindexing
     // It is a very dangerous operation: some indexes may remain till the world's end.
-    async cleanUpdate(key,value) {
+    async cleanUpdate(key, value) {
         let docId = md5(key);
         let obj = await this.db.get(constructKey(docId)).catch(e => {
             if (e.type === "NotFoundError") {
                 return false;
             }
         });
-        if (!obj) return Promise.reject(key.toString()+" is not exist inside the db.");
+        if (!obj) return Promise.reject(key.toString() + " is not exist inside the db.");
         try {
             obj = JSON.parse(obj);
             obj["v"] = JSON.stringify(value);
-            return await this.db.put(constructKey(docId),JSON.stringify(obj));
-        }catch (e) {
+            return await this.db.put(constructKey(docId), JSON.stringify(obj));
+        } catch (e) {
             return e;
         }
 
@@ -391,19 +399,19 @@ class Min {
 
     // Hash : True -> The input key is the md5 docId of the key.
     // Hash : False -> The origin key was input.
-    async get(key ,hash =false) {
-        let docId = hash? key:md5(key);
+    async get(key, hash = false) {
+        let docId = hash ? key : md5(key);
         let obj = await this.db.get(constructKey(docId)).catch(e => {
-                return e;
+            return e;
         });
         if (obj instanceof Error) return Promise.reject(obj);
         try {
             obj = JSON.parse(obj);
             return {
                 key: obj["k"],
-                docId:docId,
+                docId: docId,
                 value: JSON.parse(obj["v"]),
-                options: this.compressOptions(JSON.parse(obj["o"]),true)
+                options: this.compressOptions(JSON.parse(obj["o"]), true)
             };
         } catch (e) {
             console.error("Oops...The Get operation is interrupted by an internal error.");
@@ -412,8 +420,8 @@ class Min {
     }
 
     // only focus on the value related to the key
-    async cleanGet(key , hash=false){
-        let docId = hash? key:md5(key);
+    async cleanGet(key, hash = false) {
+        let docId = hash ? key : md5(key);
         let obj = await this.db.get(constructKey(docId)).catch(e => {
             return e;
         });
@@ -431,7 +439,7 @@ class Min {
     async search(content, ops) {
         let tokens = this.tokenizer.tokenize(content);
         let promiseArr = [];
-        let options = ops || {cosineSimilarity:true};
+        let options = ops || {cosineSimilarity: true};
         let topK = options["topK"] || 0;
         for (let token of Object.keys(tokens)) {
             promiseArr.push(this.searchIndex(token));
@@ -451,29 +459,31 @@ class Min {
             }
             docs = utils.sortByValue(docs);
             let docIds = Object.keys(docs);
-            if (topK && topK < docIds.length)  docIds=docIds.slice(0,topK-1);
-            promiseArr=[];
-            for (let docId of docIds){
-                promiseArr.push(this.get(docId,true))
+            if (topK && topK < docIds.length) docIds = docIds.slice(0, topK - 1);
+            promiseArr = [];
+            for (let docId of docIds) {
+                promiseArr.push(this.get(docId, true))
             }
-            return await Promise.all(promiseArr).then(res=>{
-                for(let obj of res){
+            return await Promise.all(promiseArr).then(res => {
+                for (let obj of res) {
                     obj["score"] = docs[obj["docId"]];
                     // simply apply cosine-similarity
-                    if(options["cosineSimilarity"]){
-                        let resTokens = this.getTokens(obj["key"],obj["value"],obj["options"])
-                        let cosValue = Math.abs(utils.cosineSimilarity(tokens,resTokens));
-                        obj["score"] = Math.sqrt(cosValue)*obj["score"];
+                    if (options["cosineSimilarity"]) {
+                        let resTokens = this.getTokens(obj["key"], obj["value"], obj["options"])
+                        let cosValue = Math.abs(utils.cosineSimilarity(tokens, resTokens));
+                        obj["score"] = Math.sqrt(cosValue) * obj["score"];
                     }
                 }
-                return res.sort((a,b)=>{ return b["score"] - a["score"]});
+                return res.sort((a, b) => {
+                    return b["score"] - a["score"]
+                });
             });
         }).catch(e => {
             return e;
         });
         if (results instanceof Error) {
             return Promise.reject(results);
-        }else{
+        } else {
             return Promise.resolve(results);
         }
     }
@@ -494,20 +504,20 @@ class Min {
             })
     }
 
-    fixDocCount(){
+    fixDocCount() {
         let docCount = 0;
         let pattern = /^0x002_/;
-        let db=this.db;
+        let db = this.db;
         this.db.createReadStream()
             .on('data', function (data) {
-                if(pattern.test(data.key)) docCount++;
+                if (pattern.test(data.key)) docCount++;
             })
             .on('error', function (err) {
                 console.log('Oh my!', err)
             })
             .on('end', function () {
-                db.put("0x000_docCount",docCount).then(info=>{
-                    console.log("Rescan complete. The docCount is "+docCount.toString());
+                db.put("0x000_docCount", docCount).then(info => {
+                    console.log("Rescan complete. The docCount is " + docCount.toString());
                 })
             })
     }
