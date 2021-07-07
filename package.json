@@ -12,9 +12,6 @@
   ],
   "scripts": {
     "test": "babel src -d lib && node test.js",
-    "start": "webpack-dev-server --hot --inline --content-base --config webpack.config.js",
-    "pack": "webpack --mode development",
-    "build": "webpack --mode production",
     "compile": "babel src -d lib"
   },
   "author": "rui",
@@ -27,14 +24,14 @@
   },
   "homepage": "https://github.com/ruiyeah/level-min#readme",
   "dependencies": {
-    "deasync": "^0.1.20",
+    "deasync": "^0.1.21",
     "franc": "^5.0.0",
     "langjudge": "^0.3.0",
-    "level": "^6.0.1",
+    "level": "^7.0.0",
     "md5": "^2.3.0",
-    "natural": "^0.6.3",
+    "natural": "^5.0.3",
     "segmentit": "^2.0.3",
-    "stopword": "^0.3.5"
+    "stopword": "^1.0.7"
   },
   "devDependencies": {
     "@babel/cli": "^7.10.5",
