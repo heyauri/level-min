@@ -1,6 +1,6 @@
 {
   "name": "level-min",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A light-weight full-text search library for the browser and Node.js, aimed to minimize the workload of developers in usage. Using LevelDB as storage backend.",
   "main": "lib/main.js",
   "repository": {

@@ -8,26 +8,7 @@ min.tokenizer.configLanguages(["Chinese","English","Japanese","Spanish","Russian
 
 min.tokenizer.setCustomStopwords(["avi","1080"]);
 
-//console.log(min.tokenizer.tokenize("Happy.Death.Day.2U.2019.WEB-DLRip_[scarabey.org].avi"));
 
-/*
-
-min.put("11",
-    "this is a test of the language detect significant",
-    {"valueWeightCalc":true}).then(info=>{
-        console.log(info);
-
-});
-min.put("This is a test of",
-    "了不起的修仙模拟器 Jack  Tom love chicken...",
-    {"valueWeightCalc":true}).then(info=>{
-    console.log(info);
-
-});
-min.put("1",
-    "卧槽221这他妈的什么玩意呀",
-    {"valueWeightCalc":true})
-*/
 
 min.put("ttt",
     {"abc":1234,"a":"14515"},
