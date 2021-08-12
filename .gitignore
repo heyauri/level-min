@@ -105,5 +105,6 @@ dist
 .tern-port
 data
 index
+tmp
 
 test.js

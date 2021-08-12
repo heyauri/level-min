@@ -5,19 +5,25 @@ import {Segment, useDefault} from 'segmentit';
 import * as stopword from "stopword"
 import * as utils from "./utils"
 
+const fs = require("fs");
+const path = require("path");
 
 const segmentit = useDefault(new Segment());
 const defaultTokenizer = new natural.WordTokenizer();
 
-const codeObj = {
+let chsEcoDict = (fs.readFileSync(path.join(__dirname,"../dict/eco.txt"))).toString();
+segmentit.loadDict(chsEcoDict);
+
+
+const langCodes = {
     "cmn": "Chinese", "jpn": "Japanese", "spa": "Spanish", "eng": "English",
     "rus": "Russian", "fas": "Persian", "fra": "French", "vie": "Vietnamese",
     "swe": "Swedish", "ita": "Italian", "pol": "Polish", "por": "Portuguese",
     "nld": "Dutch", "ind": "Indonesian"
 };
 
-const nameToCode = Object.keys(codeObj).reduce((prev, curr) => {
-    prev[codeObj[curr]] = curr;
+const langNames = Object.keys(langCodes).reduce((prev, curr) => {
+    prev[langCodes[curr]] = curr;
     return prev;
 }, {});
 
@@ -79,41 +85,41 @@ let tokenizerConfig = {
 
 
 //To avoid duplicate operation of get keys.
-let supportLangCodes = Object.keys(codeObj);
-let supportLangNames = Object.keys(nameToCode);
+let supportLangCodes = Object.keys(langCodes);
+let supportLangNames = Object.keys(langNames);
 const tokenizers = Object.keys(tokenizerFuns);
 const stopwords = Object.keys(stopwordObjs);
+let filters = [];
 
 function loadCHSCustomDict(dict) {
-    try{
+    try {
         segmentit.loadDict(dict);
         return true;
-    }catch (e) {
+    } catch (e) {
         console.error(e);
         return false
     }
 }
 
 function loadCHSCustomStopword(stopwords) {
-    try{
+    try {
         segmentit.loadStopwordDict(stopwords);
         return true;
-    }catch (e) {
+    } catch (e) {
         console.error(e);
         return false
     }
 }
 
 function regulateLangCode(code) {
-    return code in codeObj ? codeObj[code] : "Default"
+    return Reflect.has(langCodes, code) ? langCodes[code] : "Default"
 }
 
 function judge_type(types) {
     let langType = "Default";
     if (types.indexOf("Chinese") > -1) {
         langType = "Chinese";
-    }
-    else {
+    } else {
         for (let key of tokenizers) {
             if (types.indexOf(key) > -1) {
                 return key;
@@ -140,9 +146,9 @@ function configLanguages(langList) {
     let newCodes = [];
     let newLangs = [];
     for (let lang of langList) {
-        if (lang in supportLangNames) {
+        if (Reflect.has(langNames, lang)) {
             newLangs.push(lang);
-            newCodes.push(nameToCode[lang]);
+            newCodes.push(langNames[lang]);
         }
     }
     supportLangNames = newLangs;
@@ -151,7 +157,7 @@ function configLanguages(langList) {
 
 function configTokenizer(config) {
     for (let key of Object.keys(config)) {
-        if (key in tokenizerConfig ) {
+        if (Reflect.has(tokenizerConfig, key)) {
             tokenizerConfig[key] = config[key];
         }
     }
@@ -184,8 +190,13 @@ function setCustomStopwords(stopwords) {
     }
 }
 
+//filter should be a function that return true => the token will be kept or false => the token will be abandoned
 function applyCustomTokenFilter(filter) {
-
+    if(utils.isArray(filter)){
+        filter.forEach(f=>{applyCustomTokenFilter(f)})
+    }else if(utils.isFunction(filter)){
+        filters.push(filter)
+    }
 }
 
 function setCustomStemmer(stemmer) {
@@ -204,13 +215,20 @@ function setCustomStemmer(stemmer) {
     }
 }
 
+function tokenFilter(token){
+    for(let filter of filters){
+        if(!filter(token)){
+            return false;
+        }
+    }
+    return true;
+}
 
 function tokenize(sentence) {
-    if(typeof sentence !== "string")
-    {
+    if (typeof sentence !== "string") {
         if (utils.isNumber(sentence)) {
             return sentence.toString();
-        }else{
+        } else {
             sentence = JSON.stringify(sentence);
         }
     }
@@ -252,15 +270,13 @@ function tokenize(sentence) {
     } catch (e) {
         console.error(e);
     }
-
     //Stemmers
     try {
-        if (tokenizerConfig.customStemmer){
+        if (tokenizerConfig.customStemmer) {
             for (let k in tokens) {
                 tokens[k] = customStemmer.stem(tokens[k]);
             }
-        }
-        else if (langType in stemmerFuns) {
+        } else if (langType in stemmerFuns) {
             let stemmer = stemmerFuns[langType];
             for (let k in tokens) {
                 tokens[k] = stemmer.stem(tokens[k]);
@@ -269,9 +285,19 @@ function tokenize(sentence) {
     } catch (e) {
         console.error(e);
     }
+    //Custom filters
+    if(filters.length>0){
+        let tmp =[];
+        for(let token of tokens){
+            if(tokenFilter(token)){
+                tmp.push(token);
+            }
+        }
+        tokens = tmp;
+    }
     let result = {};
     for (let item of tokens) {
-        if (!(item in result)) {
+        if (!Reflect.has(result,item)) {
             result[item] = 1;
         } else {
             result[item] += 1;
@@ -290,5 +316,6 @@ export {
     setCustomStemmer,
     configTokenizer,
     loadCHSCustomDict,
-    loadCHSCustomStopword
+    loadCHSCustomStopword,
+    applyCustomTokenFilter
 }

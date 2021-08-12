@@ -7,6 +7,12 @@
     "preserveConstEnums": true,
     "sourceMap": false,
     "outDir": "./lib",
-    "rootDir": "./src"
+    "rootDir": "./src",
+    "lib": [
+      "dom",
+      "es5",
+      "scripthost",
+      "es2015.promise"
+    ]
   }
 }

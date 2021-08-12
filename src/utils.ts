@@ -22,6 +22,11 @@ export function isArray(v) {
     return getType(v) === "[object Array]";
 }
 
+export function isFunction(v) {
+    return getType(v) === "[object Function]";
+}
+
+
 //t : coefficient of the b value
 export function mergeTokens(a, b, t) {
     try {
@@ -97,3 +102,18 @@ export function parse(input:string) {
         return input;
     }
 }
+
+export function ToCDB(str) {
+    let tmp = "";
+    for (let i = 0; i < str.length; i++) {
+        if (str.charCodeAt(i) > 65248 && str.charCodeAt(i) < 65375) {
+            tmp += String.fromCharCode(str.charCodeAt(i) - 65248);
+        }
+        else {
+            tmp += String.fromCharCode(str.charCodeAt(i));
+        }
+    }
+    return tmp
+}
+
+
