@@ -1,6 +1,6 @@
 {
   "name": "level-min",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A light-weight full-text search library for the browser and Node.js, aimed to minimize the workload of developers in usage. Using LevelDB as storage backend.",
   "main": "lib/main.js",
   "repository": {
@@ -12,9 +12,6 @@
   ],
   "scripts": {
     "test": "babel src -d lib && node test.js",
-    "start": "webpack-dev-server --hot --inline --content-base --config webpack.config.js",
-    "pack": "webpack --mode development",
-    "build": "webpack --mode production",
     "compile": "babel src -d lib"
   },
   "author": "rui",
@@ -27,16 +24,17 @@
   },
   "homepage": "https://github.com/ruiyeah/level-min#readme",
   "dependencies": {
-    "deasync": "^0.1.20",
+    "deasync": "^0.1.21",
     "franc": "^5.0.0",
     "langjudge": "^0.3.0",
-    "level": "^6.0.1",
+    "level": "^7.0.0",
     "md5": "^2.3.0",
-    "natural": "^0.6.3",
+    "natural": "^5.0.3",
     "segmentit": "^2.0.3",
-    "stopword": "^0.3.5"
+    "stopword": "^1.0.7"
   },
   "devDependencies": {
+    "@types/node": "^16.4.13",
     "@babel/cli": "^7.10.5",
     "@babel/core": "^7.11.4",
     "@babel/plugin-transform-runtime": "^7.11.0",

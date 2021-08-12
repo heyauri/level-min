@@ -6,36 +6,23 @@ let tokenizer = min.tokenizer;
 
 min.tokenizer.configLanguages(["Chinese","English","Japanese","Spanish","Russian","Italian"]);
 
+min.tokenizer.loadCHSCustomDict(["农商行|0x0008|101000"]);
+min.tokenizer.loadCHSCustomStopword(["大"]);
 min.tokenizer.setCustomStopwords(["avi","1080"]);
 
-//console.log(min.tokenizer.tokenize("Happy.Death.Day.2U.2019.WEB-DLRip_[scarabey.org].avi"));
+
+console.log(min.tokenizer.tokenize("其次，要保持良好心态，摆正工作态度。银行职员的心态往往是诱发各类金融犯罪的罪魁祸首，比如拜金主义思想会激发内心的贪欲，超前消费观念则会导致变异的社会心态，侥幸心理会使人胆大妄为，又比如当员工在工作中接触了数量众多的大客户时，产生了心理不平衡等等。因此，对于我们农商行的每一名员工来说，更加需要懂得调整调节自己的心态，始终保持一种良好的心境，不被歪风邪气所影响，廉洁自爱，踏踏实实做好本职工作。"));
+
+// min.put("ttt",
+//     {"abc":1234,"a":"14515","content":"其次，要保持良好心态，摆正工作态度。银行职员的心态往往是诱发各类金融犯罪的罪魁祸首，比如拜金主义思想会激发内心的贪欲，超前消费观念则会导致变异的社会心态，侥幸心理会使人胆大妄为，又比如当员工在工作中接触了数量众多的大客户时，产生了心理不平衡等等。因此，对于我们农商行的每一名员工来说，更加需要懂得调整调节自己的心态，始终保持一种良好的心境，不被歪风邪气所影响，廉洁自爱，踏踏实实做好本职工作。"},
+//     {"valueWeightCalc":true,"valueWeights":{"content":2}}).then(info=>{
+//         console.log(info);
+// }).catch(e=>{
+//         console.log(e);
+// });
 
 
-min.put("11",
-    "this is a test of the language detect significant",
-    {"valueWeightCalc":true}).then(info=>{
-        console.log(info);
-
-});
-min.put("This is a test of",
-    "了不起的修仙模拟器 Jack  Tom love chicken...",
-    {"valueWeightCalc":true}).then(info=>{
-    console.log(info);
-
-});
-min.put("1",
-    "卧槽221这他妈的什么玩意呀",
-    {"valueWeightCalc":true})
-
-min.put("ttt",
-    {"abc":1234,"a":"14515",b:{c:"ddd"}},
-    {"valueWeightCalc":true}).then(info=>{
-        console.log(info);
-}).catch(e=>{
-        console.log(e);
-})
-
-
+/*
 min.search("卧槽了不起的修仙模拟器", {cosineSimilarity:true}).then(res=> {
     console.log(res);
 });
@@ -59,7 +46,8 @@ min.cleanGet("1122").then(info=>{
 }).catch(e=>{
     console.log(e)
 });
-
-setTimeout(()=>{
-    min.printAll();
-},500);
+*/
+//
+// setTimeout(()=>{
+//     min.printAll();
+// },500);

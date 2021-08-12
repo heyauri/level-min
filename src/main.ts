@@ -1,9 +1,9 @@
-import Level from "level"
-import path from "path"
-import md5 from "md5"
-import deAsync from "deasync"
-import * as utils from "./utils.js"
-import * as tokenizer from "./tokenizer.js"
+import * as Level from "level"
+import * as path from "path"
+import * as md5 from "md5"
+import * as deAsync from "deasync"
+import * as utils from "./utils"
+import * as tokenizer from "./tokenizer"
 
 function constructIndex(index) {
     return "0x001_" + index.toString();
@@ -14,16 +14,23 @@ function constructKey(key) {
 }
 
 class Min {
+    private optionsTable: { keyWeight: string; valueWeightCalc: string; defaultValueWeight: string; valueWeights: string };
+    private compressOptionsTable: {};
+    public tokenizer: {tokenize};
+    public db: any;
+    private docCount: number;
     constructor() {
         if (arguments.length > 0) {
             this.setDB(arguments[0], arguments[1]);
         }
-        let obj = this.optionsTable = {
+        let obj = {
             keyWeight: "kw",
             valueWeightCalc: "vwc",
             defaultValueWeight: "dvw",
             valueWeights: "vw",
         };
+        this.optionsTable = obj;
+        
         this.compressOptionsTable = Object.keys(obj).reduce((prev, curr) => {
             prev[obj[curr]] = curr;
             return prev;
@@ -101,7 +108,9 @@ class Min {
         let tokens = {};
         let tempTokens = {};
         if (options["keyWeight"]) {
+            // @ts-ignore
             let tempTokens = this.tokenizer.tokenize(key);
+            // @ts-ignore
             utils.mergeTokens(tokens, tempTokens);
         }
         if (options["valueWeightCalc"]) {
@@ -112,9 +121,9 @@ class Min {
                 utils.mergeTokens(tokens, tempTokens, defaultValueWeight);
             } else if (utils.isObject(value)) {
                 for (let key of Object.keys(value)) {
-                    if (key in valueWeights || defaultValueWeight > 0) {
+                    if (Reflect.has(valueWeights,key) || defaultValueWeight > 0) {
                         tempTokens = this.tokenizer.tokenize(value[key]);
-                        let weight = key in valueWeights ? valueWeights[key] : defaultValueWeight;
+                        let weight = Reflect.has(valueWeights,key) ? valueWeights[key] : defaultValueWeight;
                         utils.mergeTokens(tokens, tempTokens, weight);
                     }
                 }
@@ -466,7 +475,7 @@ class Min {
                     obj["score"] = docs[obj["docId"]];
                     // simply apply cosine-similarity
                     if (options["cosineSimilarity"]) {
-                        let resTokens = this.getTokens(obj["key"], obj["value"], obj["options"])
+                        let resTokens = this.getTokens(obj["key"], obj["value"], obj["options"]);
                         let cosValue = Math.abs(utils.cosineSimilarity(tokens, resTokens));
                         obj["score"] = Math.sqrt(cosValue) * obj["score"];
                     }

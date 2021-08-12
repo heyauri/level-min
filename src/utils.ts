@@ -90,7 +90,7 @@ export function stringify(input) {
     return isString(input) ? input : JSON.stringify(input);
 }
 
-export function parse(input) {
+export function parse(input:string) {
     try{
         return JSON.parse(input);
     }catch (e) {

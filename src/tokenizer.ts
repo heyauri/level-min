@@ -1,9 +1,9 @@
-import franc from "franc"
-import langjudge from "langjudge"
-import natural from "natural"
+import * as franc from "franc"
+import * as langjudge from "langjudge"
+import * as natural from "natural"
 import {Segment, useDefault} from 'segmentit';
-import stopword from "stopword"
-import * as utils from "./utils.js"
+import * as stopword from "stopword"
+import * as utils from "./utils"
 
 
 const segmentit = useDefault(new Segment());
@@ -83,6 +83,26 @@ let supportLangCodes = Object.keys(codeObj);
 let supportLangNames = Object.keys(nameToCode);
 const tokenizers = Object.keys(tokenizerFuns);
 const stopwords = Object.keys(stopwordObjs);
+
+function loadCHSCustomDict(dict) {
+    try{
+        segmentit.loadDict(dict);
+        return true;
+    }catch (e) {
+        console.error(e);
+        return false
+    }
+}
+
+function loadCHSCustomStopword(stopwords) {
+    try{
+        segmentit.loadStopwordDict(stopwords);
+        return true;
+    }catch (e) {
+        console.error(e);
+        return false
+    }
+}
 
 function regulateLangCode(code) {
     return code in codeObj ? codeObj[code] : "Default"
@@ -164,6 +184,9 @@ function setCustomStopwords(stopwords) {
     }
 }
 
+function applyCustomTokenFilter(filter) {
+
+}
 
 function setCustomStemmer(stemmer) {
     try {
@@ -265,5 +288,7 @@ export {
     setCustomStopwords,
     setCustomTokenizer,
     setCustomStemmer,
-    configTokenizer
+    configTokenizer,
+    loadCHSCustomDict,
+    loadCHSCustomStopword
 }
