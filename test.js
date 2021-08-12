@@ -10,7 +10,6 @@ min.tokenizer.setCustomStopwords(["avi","1080"]);
 
 //console.log(min.tokenizer.tokenize("Happy.Death.Day.2U.2019.WEB-DLRip_[scarabey.org].avi"));
 
-/*
 
 min.put("11",
     "this is a test of the language detect significant",
@@ -27,10 +26,9 @@ min.put("This is a test of",
 min.put("1",
     "卧槽221这他妈的什么玩意呀",
     {"valueWeightCalc":true})
-*/
 
 min.put("ttt",
-    {"abc":1234,"a":"14515"},
+    {"abc":1234,"a":"14515",b:{c:"ddd"}},
     {"valueWeightCalc":true}).then(info=>{
         console.log(info);
 }).catch(e=>{
@@ -38,7 +36,6 @@ min.put("ttt",
 })
 
 
-/*
 min.search("卧槽了不起的修仙模拟器", {cosineSimilarity:true}).then(res=> {
     console.log(res);
 });
@@ -62,7 +59,6 @@ min.cleanGet("1122").then(info=>{
 }).catch(e=>{
     console.log(e)
 });
-*/
 
 setTimeout(()=>{
     min.printAll();
