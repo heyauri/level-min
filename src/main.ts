@@ -16,7 +16,7 @@ function constructKey(key) {
 class Min {
     private optionsTable: { keyWeight: string; valueWeightCalc: string; defaultValueWeight: string; valueWeights: string };
     private compressOptionsTable: {};
-    public tokenizer: {tokenize};
+    public tokenizer: { tokenize };
     public db: any;
     private docCount: number;
     constructor() {
@@ -30,7 +30,7 @@ class Min {
             valueWeights: "vw",
         };
         this.optionsTable = obj;
-        
+
         this.compressOptionsTable = Object.keys(obj).reduce((prev, curr) => {
             prev[obj[curr]] = curr;
             return prev;
@@ -114,16 +114,18 @@ class Min {
             utils.mergeTokens(tokens, tempTokens);
         }
         if (options["valueWeightCalc"]) {
-            let defaultValueWeight = options["defaultValueWeight"]||1;
-            let valueWeights = options["valueWeights"]||{};
+            let defaultValueWeight = options["defaultValueWeight"] || 1;
+            let valueWeights = options["valueWeights"] || {};
             if (utils.isString(value)) {
                 tempTokens = this.tokenizer.tokenize(value);
                 utils.mergeTokens(tokens, tempTokens, defaultValueWeight);
             } else if (utils.isObject(value)) {
                 for (let key of Object.keys(value)) {
-                    if (Reflect.has(valueWeights,key) || defaultValueWeight > 0) {
+                    // @ts-ignore
+                    if (Reflect.has(valueWeights, key) || defaultValueWeight > 0) {
                         tempTokens = this.tokenizer.tokenize(value[key]);
-                        let weight = Reflect.has(valueWeights,key) ? valueWeights[key] : defaultValueWeight;
+                        // @ts-ignore
+                        let weight = Reflect.has(valueWeights, key) ? valueWeights[key] : defaultValueWeight;
                         utils.mergeTokens(tokens, tempTokens, weight);
                     }
                 }
@@ -187,7 +189,7 @@ class Min {
                     obj["l"] += 1;
                 }
                 obj["v"][docId] = tokens[obj["t"]];
-                ops.push({type: "put", key: constructIndex(obj["t"]), value: JSON.stringify(obj)});
+                ops.push({ type: "put", key: constructIndex(obj["t"]), value: JSON.stringify(obj) });
             }
             ops.push({
                 type: "put",
@@ -198,7 +200,7 @@ class Min {
                     o: this.compressOptions(options)
                 })
             });
-            ops.push({type: "put", key: "0x000_docCount", value: (this.docCount).toString()});
+            ops.push({ type: "put", key: "0x000_docCount", value: (this.docCount).toString() });
             return ops;
         }).catch(e => {
             console.error("Oops...The Create operation is interrupted by an internal error.");
@@ -241,7 +243,7 @@ class Min {
                     obj["l"] = Object.keys(obj["v"]).length;
                     //there is no other doc related to this index, delete it
                     if (obj["l"] === 0) {
-                        ops.push({type: "del", key: constructIndex(obj["t"])});
+                        ops.push({ type: "del", key: constructIndex(obj["t"]) });
                         continue;
                     }
                 } else {
@@ -251,7 +253,7 @@ class Min {
                     }
                     obj["v"][docId] = tokens[obj["t"]];
                 }
-                ops.push({type: "put", key: constructIndex(obj["t"]), value: JSON.stringify(obj)});
+                ops.push({ type: "put", key: constructIndex(obj["t"]), value: JSON.stringify(obj) });
             }
 
             ops.push({
@@ -371,13 +373,13 @@ class Min {
                         obj["l"] = Object.keys(obj["v"]).length;
                         //there is no other doc related to this index, delete it
                         if (obj["l"] === 0) {
-                            ops.push({type: "del", key: constructIndex(obj["t"])});
+                            ops.push({ type: "del", key: constructIndex(obj["t"]) });
                         } else {
-                            ops.push({type: "put", key: constructIndex(obj["t"]), value: JSON.stringify(obj)});
+                            ops.push({ type: "put", key: constructIndex(obj["t"]), value: JSON.stringify(obj) });
                         }
                     }
-                    ops.push({type: "del", key: constructKey(docId)});
-                    ops.push({type: "put", key: "0x000_docCount", value: (this.docCount).toString()});
+                    ops.push({ type: "del", key: constructKey(docId) });
+                    ops.push({ type: "put", key: "0x000_docCount", value: (this.docCount).toString() });
                     return ops;
                 }).catch(e => {
                     console.error("Oops...The Delete operation is interrupted by an internal error.");
@@ -441,31 +443,35 @@ class Min {
         }
     }
 
+
+
+    static async calTfIdf(promise, docCount, docs) {
+        let result = await promise;
+        let len = result["l"];
+        if (len === 0) return Promise.resolve(0);
+        let idf = 1 + Math.log(docCount / (1 + len));
+        let tfs = result["v"];
+        for (let docId in tfs) {
+            let tf_norm = 1 + Math.log(1 + Math.log(tfs[docId]));
+            docId in docs ? docs[docId] += idf * tf_norm : docs[docId] = idf * tf_norm;
+        }
+        return Promise.resolve(docs);
+    }
     //Search the content by tf-idf & cosine-similarity.
     async search(content, ops) {
         let tokens = this.tokenizer.tokenize(content);
         let promiseArr = [];
-        let options = ops || {cosineSimilarity: true};
+        // set cosineSimilarity to false to speed up the search operation.
+        let options = ops || { cosineSimilarity: false };
         let topK = options["topK"] || 0;
-        for (let token of Object.keys(tokens)) {
-            promiseArr.push(this.searchIndex(token));
-        }
+        let docs = {};
         let docCount = await this.getDocCount();
-        let results = await Promise.all(promiseArr).then(async results => {
-            let docs = {};
-            for (let result of results) {
-                let len = result["l"];
-                if (len === 0) continue;
-                let idf = 1 + Math.log(docCount / (1 + len));
-                let tfs = result["v"];
-                for (let docId of Object.keys(tfs)) {
-                    let tf_norm = 1 + Math.log(1 + Math.log(tfs[docId]));
-                    docId in docs ? docs[docId] += idf * tf_norm : docs[docId] = idf * tf_norm;
-                }
-            }
+        for (let token of Object.keys(tokens)) {
+            promiseArr.push(Min.calTfIdf(this.searchIndex(token), docCount, docs));
+        }
+        let results = await Promise.all(promiseArr).then(async res => {
             docs = utils.sortByValue(docs);
             let docIds = Object.keys(docs);
-            if (topK && topK < docIds.length) docIds = docIds.slice(0, topK - 1);
             promiseArr = [];
             for (let docId of docIds) {
                 promiseArr.push(this.get(docId, true))
@@ -480,9 +486,11 @@ class Min {
                         obj["score"] = Math.sqrt(cosValue) * obj["score"];
                     }
                 }
-                return res.sort((a, b) => {
+                let final = res.sort((a, b) => {
                     return b["score"] - a["score"]
                 });
+                if (topK && topK < final.length) final = final.slice(0, topK - 1);
+                return final;
             });
         }).catch(e => {
             return e;
