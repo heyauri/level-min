@@ -232,6 +232,7 @@ function tokenize(sentence) {
             sentence = JSON.stringify(sentence);
         }
     }
+    sentence = utils.ToCDB(sentence);
     let langType = langTypeDetect(sentence);
     let tokens = [];
     try {

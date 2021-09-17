@@ -106,8 +106,10 @@ export function parse(input:string) {
 export function ToCDB(str) {
     let tmp = "";
     for (let i = 0; i < str.length; i++) {
-        if (str.charCodeAt(i) > 65248 && str.charCodeAt(i) < 65375) {
+        if (str.charCodeAt(i) > 65281 && str.charCodeAt(i) < 65373) {
             tmp += String.fromCharCode(str.charCodeAt(i) - 65248);
+        }else if (str.charCodeAt(i) == 12288) {//空格
+            tmp += String.fromCharCode(str.charCodeAt(i) - 12288 + 32);
         }
         else {
             tmp += String.fromCharCode(str.charCodeAt(i));
