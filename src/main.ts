@@ -452,7 +452,7 @@ class Min {
         let idf = 1 + Math.log(docCount / (1 + len));
         let tfs = result["v"];
         for (let docId in tfs) {
-            let tf_norm = 1 + Math.log(1 + Math.log(tfs[docId]));
+            let tf_norm = 1 + Math.log1p(Math.log(tfs[docId]));
             docId in docs ? docs[docId] += idf * tf_norm : docs[docId] = idf * tf_norm;
         }
         return Promise.resolve(docs);
