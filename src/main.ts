@@ -452,7 +452,7 @@ class Min {
         let idf = 1 + Math.log(docCount / (1 + len));
         let tfs = result["v"];
         for (let docId in tfs) {
-            let tf_norm = 1 + Math.log1p(Math.log(tfs[docId]));
+            let tf_norm = 1 + Math.log1p(Math.log1p(tfs[docId]));
             docId in docs ? docs[docId] += idf * tf_norm : docs[docId] = idf * tf_norm;
         }
         return Promise.resolve(docs);
@@ -482,7 +482,7 @@ class Min {
                     // simply apply cosine-similarity
                     if (options["cosineSimilarity"]) {
                         let resTokens = this.getTokens(obj["key"], obj["value"], obj["options"]);
-                        let cosValue = Math.abs(utils.cosineSimilarity(tokens, resTokens));
+                        let cosValue = 0.01+Math.abs(utils.cosineSimilarity(tokens, resTokens));
                         obj["score"] = Math.sqrt(cosValue) * obj["score"];
                     }
                 }
