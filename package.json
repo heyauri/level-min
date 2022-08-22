@@ -5,7 +5,7 @@
   "main": "lib/main.js",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ruiyeah/level-min.git"
+    "url": "git+https://github.com/heyauri/level-min.git"
   },
   "keywords": [
     "leveldb"
@@ -17,12 +17,12 @@
   "author": "rui",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/ruiyeah/level-min/issues"
+    "url": "https://github.com/heyauri/level-min/issues"
   },
   "engines": {
     "node": ">=6"
   },
-  "homepage": "https://github.com/ruiyeah/level-min#readme",
+  "homepage": "https://github.com/heyauri/level-min#readme",
   "dependencies": {
     "deasync": "^0.1.21",
     "franc": "^5.0.0",
