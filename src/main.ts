@@ -1,9 +1,10 @@
-import * as Level from "level"
-import * as path from "path"
-import * as md5 from "md5"
-import * as deAsync from "deasync"
-import * as utils from "./utils"
-import * as tokenizer from "./tokenizer"
+const { Level } = require("level");
+import * as path from "path";
+import * as md5 from "md5";
+import * as deAsync from "deasync";
+import * as utils from "./utils";
+import * as tokenizer from "./tokenizer";
+import { existsSync } from "fs";
 
 function constructIndex(index) {
     return "0x001_" + index.toString();
@@ -16,7 +17,7 @@ function constructKey(key) {
 class Min {
     private optionsTable: { keyWeight: string; valueWeightCalc: string; defaultValueWeight: string; valueWeights: string };
     private compressOptionsTable: {};
-    public tokenizer: {tokenize};
+    public tokenizer: { tokenize };
     public db: any;
     private docCount: number;
     constructor() {
@@ -30,7 +31,7 @@ class Min {
             valueWeights: "vw",
         };
         this.optionsTable = obj;
-        
+
         this.compressOptionsTable = Object.keys(obj).reduce((prev, curr) => {
             prev[obj[curr]] = curr;
             return prev;
@@ -40,27 +41,23 @@ class Min {
 
     setDB(dbAddress, options) {
         try {
-            if (dbAddress.indexOf("/") < 0 && dbAddress.indexOf("\\") < 0) {
+            if (!existsSync(dbAddress)) {
                 dbAddress = path.join(process.cwd(), dbAddress);
             }
             options = options || {};
-            this.db = Level(dbAddress, options);
+            this.db = new Level(dbAddress, options);
             let _this = this;
             let done = false;
             this.db.get("0x000_docCount", function (err, val) {
-                if (!val && err) {
-                    if (err.type === "NotFoundError") {
-                        _this.docCount = 0;
-                    } else {
-                        throw err;
-                    }
+                if (!val && err && err.code === "LEVEL_NOT_FOUND") {
+                    _this.docCount = 0;
                 } else {
                     _this.docCount = parseInt(val) ? parseInt(val) : 0;
                 }
                 done = true;
             });
             /*
-              Covert the query of docCount from async to sync, to maintain its' consistency.
+             *Covert the query of docCount from async to sync, to maintain its' consistency.
              */
             deAsync.loopWhile(() => {
                 return !done;
@@ -82,13 +79,13 @@ class Min {
         if (!options || !utils.isObject(options)) {
             options = {};
         }
-        if (("keyWeight" in options) && !utils.isNumber(options["keyWeight"])) {
+        if ("keyWeight" in options && !utils.isNumber(options["keyWeight"])) {
             options["keyWeight"] = 1;
         }
-        if (("defaultValueWeight" in options) && !utils.isNumber(options["defaultValueWeight"])) {
+        if ("defaultValueWeight" in options && !utils.isNumber(options["defaultValueWeight"])) {
             options["defaultValueWeight"] = 1;
         }
-        if (("valueWeights" in options) && !utils.isObject(options["valueWeights"])) {
+        if ("valueWeights" in options && !utils.isObject(options["valueWeights"])) {
             options["valueWeights"] = {};
         }
         return options;
@@ -103,7 +100,6 @@ class Min {
         return res;
     }
 
-
     getTokens(key, value, options) {
         let tokens = {};
         let tempTokens = {};
@@ -114,16 +110,16 @@ class Min {
             utils.mergeTokens(tokens, tempTokens);
         }
         if (options["valueWeightCalc"]) {
-            let defaultValueWeight = options["defaultValueWeight"]||1;
-            let valueWeights = options["valueWeights"]||{};
+            let defaultValueWeight = options["defaultValueWeight"] || 1;
+            let valueWeights = options["valueWeights"] || {};
             if (utils.isString(value)) {
                 tempTokens = this.tokenizer.tokenize(value);
                 utils.mergeTokens(tokens, tempTokens, defaultValueWeight);
             } else if (utils.isObject(value)) {
                 for (let key of Object.keys(value)) {
-                    if (Reflect.has(valueWeights,key) || defaultValueWeight > 0) {
+                    if (Reflect.has(valueWeights, key) || defaultValueWeight > 0) {
                         tempTokens = this.tokenizer.tokenize(value[key]);
-                        let weight = Reflect.has(valueWeights,key) ? valueWeights[key] : defaultValueWeight;
+                        let weight = Reflect.has(valueWeights, key) ? valueWeights[key] : defaultValueWeight;
                         utils.mergeTokens(tokens, tempTokens, weight);
                     }
                 }
@@ -148,28 +144,31 @@ class Min {
 
     searchIndex(token) {
         return new Promise((resolve, reject) => {
-            this.db.get(constructIndex(token)).then(result => {
-                resolve(JSON.parse(result));
-            }).catch(e => {
-                if (e.type === "NotFoundError") {
-                    // v: {docId:tf,...}
-                    resolve({
-                        t: token,
-                        l: 0,
-                        v: {}
-                    });
-                } else {
-                    console.error(e);
-                    reject(e);
-                }
-            });
+            this.db
+                .get(constructIndex(token))
+                .then((result) => {
+                    resolve(JSON.parse(result));
+                })
+                .catch((e) => {
+                    if (e.code === "LEVEL_NOT_FOUND") {
+                        // v: {docId:tf,...}
+                        resolve({
+                            t: token,
+                            l: 0,
+                            v: {},
+                        });
+                    } else {
+                        console.error("searchIndex", e);
+                        reject(e);
+                    }
+                });
         });
     }
 
     async getDocCount() {
-        return await this.db.get("0x000_docCount").catch(e => {
-            return e.type === "NotFoundError" ? 0 : false;
-        })
+        return await this.db.get("0x000_docCount").catch((e) => {
+            return e.code === "LEVEL_NOT_FOUND" ? 0 : false;
+        });
     }
 
     async create(key, value, options) {
@@ -180,46 +179,50 @@ class Min {
         for (let token of Object.keys(tokens)) {
             promiseArr.push(this.searchIndex(token));
         }
-        let ops = await Promise.all(promiseArr).then((results) => {
-            let ops = [];
-            for (let obj of results) {
-                if (!(docId in obj["v"])) {
-                    obj["l"] += 1;
+        let ops = await Promise.all(promiseArr)
+            .then((results) => {
+                let ops = [];
+                for (let obj of results) {
+                    if (!(docId in obj["v"])) {
+                        obj["l"] += 1;
+                    }
+                    obj["v"][docId] = tokens[obj["t"]];
+                    ops.push({ type: "put", key: constructIndex(obj["t"]), value: JSON.stringify(obj) });
                 }
-                obj["v"][docId] = tokens[obj["t"]];
-                ops.push({type: "put", key: constructIndex(obj["t"]), value: JSON.stringify(obj)});
-            }
-            ops.push({
-                type: "put",
-                key: constructKey(docId),
-                value: JSON.stringify({
-                    k: key,
-                    v: value,
-                    o: this.compressOptions(options)
-                })
+                ops.push({
+                    type: "put",
+                    key: constructKey(docId),
+                    value: JSON.stringify({
+                        k: key,
+                        v: value,
+                        o: this.compressOptions(options),
+                    }),
+                });
+                ops.push({ type: "put", key: "0x000_docCount", value: this.docCount.toString() });
+                return ops;
+            })
+            .catch((e) => {
+                console.error("Oops...The Create operation is interrupted by an internal error.");
+                return e;
             });
-            ops.push({type: "put", key: "0x000_docCount", value: (this.docCount).toString()});
-            return ops;
-        }).catch(e => {
-            console.error("Oops...The Create operation is interrupted by an internal error.");
-            return e;
-        });
         return new Promise((resolve, reject) => {
             if (ops instanceof Error) {
                 this.docCount -= 1;
                 reject(ops);
             }
-            this.db.batch(ops).then(info => {
-                resolve("Put: " + key + " successfully.");
-            }).catch(e => {
-                this.docCount -= 1;
-                console.error(e);
-                console.error("Oops...The Create operation is interrupted by an internal error.");
-                reject(e);
-            })
+            this.db
+                .batch(ops)
+                .then((info) => {
+                    resolve("Put: " + key + " successfully.");
+                })
+                .catch((e) => {
+                    this.docCount -= 1;
+                    console.error(e);
+                    console.error("Oops...The Create operation is interrupted by an internal error.");
+                    reject(e);
+                });
         });
     }
-
 
     async update(key, value, options, prev_obj) {
         let docId = md5(key);
@@ -232,56 +235,60 @@ class Min {
             promiseArr.push(this.searchIndex(token));
         }
         tokens = diffTokens;
-        let ops = await Promise.all(promiseArr).then((results) => {
-            let ops = [];
-            for (let obj of results) {
-                //DEL:
-                if (tokens[obj["t"]] <= 0) {
-                    delete obj["v"][docId];
-                    obj["l"] = Object.keys(obj["v"]).length;
-                    //there is no other doc related to this index, delete it
-                    if (obj["l"] === 0) {
-                        ops.push({type: "del", key: constructIndex(obj["t"])});
-                        continue;
+        let ops = await Promise.all(promiseArr)
+            .then((results) => {
+                let ops = [];
+                for (let obj of results) {
+                    //DEL:
+                    if (tokens[obj["t"]] <= 0) {
+                        delete obj["v"][docId];
+                        obj["l"] = Object.keys(obj["v"]).length;
+                        //there is no other doc related to this index, delete it
+                        if (obj["l"] === 0) {
+                            ops.push({ type: "del", key: constructIndex(obj["t"]) });
+                            continue;
+                        }
+                    } else {
+                        //UPDATE
+                        if (!(docId in obj["v"])) {
+                            obj["l"] += 1;
+                        }
+                        obj["v"][docId] = tokens[obj["t"]];
                     }
-                } else {
-                    //UPDATE
-                    if (!(docId in obj["v"])) {
-                        obj["l"] += 1;
-                    }
-                    obj["v"][docId] = tokens[obj["t"]];
+                    ops.push({ type: "put", key: constructIndex(obj["t"]), value: JSON.stringify(obj) });
                 }
-                ops.push({type: "put", key: constructIndex(obj["t"]), value: JSON.stringify(obj)});
-            }
 
-            ops.push({
-                type: "put",
-                key: constructKey(docId),
-                value: JSON.stringify({
-                    k: key,
-                    v: value,
-                    o: this.compressOptions(options)
-                })
+                ops.push({
+                    type: "put",
+                    key: constructKey(docId),
+                    value: JSON.stringify({
+                        k: key,
+                        v: value,
+                        o: this.compressOptions(options),
+                    }),
+                });
+                return ops;
+            })
+            .catch((e) => {
+                console.error("Oops...The Create operation is interrupted by an internal error.");
+                return e;
             });
-            return ops;
-        }).catch(e => {
-            console.error("Oops...The Create operation is interrupted by an internal error.");
-            return e;
-        });
         return new Promise((resolve, reject) => {
             if (ops instanceof Error) {
                 reject(ops);
             }
-            this.db.batch(ops).then(info => {
-                resolve("Put: " + key + " successfully.");
-            }).catch(e => {
-                console.error(e);
-                console.error("Oops...The Create operation is interrupted by an internal error.");
-                reject(e);
-            })
+            this.db
+                .batch(ops)
+                .then((info) => {
+                    resolve("Put: " + key + " successfully.");
+                })
+                .catch((e) => {
+                    console.error(e);
+                    console.error("Oops...The Create operation is interrupted by an internal error.");
+                    reject(e);
+                });
         });
     }
-
 
     async put(key, value, options) {
         let docId = md5(key);
@@ -291,15 +298,15 @@ class Min {
             console.error("Try this.fixDocCount()");
             return Promise.reject(false);
         }
-        let obj = await this.db.get(constructKey(docId)).catch(e => {
-            if (e.type === "NotFoundError") {
+        let obj = await this.db.get(constructKey(docId)).catch((e) => {
+            if (e.code === "LEVEL_NOT_FOUND") {
                 return false;
             }
         });
         options = this.initOptions(options);
         try {
             if (!obj) {
-                return await this.create(key, value, options)
+                return await this.create(key, value, options);
             } else {
                 obj = JSON.parse(obj);
                 if (key === obj["k"] && value === obj["v"] && options === obj["o"]) {
@@ -321,8 +328,8 @@ class Min {
     // It is a very dangerous operation: some indexes may remain till the world's end.
     async cleanUpdate(key, value) {
         let docId = md5(key);
-        let obj = await this.db.get(constructKey(docId)).catch(e => {
-            if (e.type === "NotFoundError") {
+        let obj = await this.db.get(constructKey(docId)).catch((e) => {
+            if (e.code === "LEVEL_NOT_FOUND") {
                 return false;
             }
         });
@@ -333,9 +340,7 @@ class Min {
         } catch (e) {
             return e;
         }
-
     }
-
 
     async del(key) {
         let docId = md5(key);
@@ -345,8 +350,8 @@ class Min {
             console.error("Try this.fixDocCount()");
             return Promise.reject(false);
         }
-        let obj = await this.db.get(constructKey(docId)).catch(e => {
-            if (e.type === "NotFoundError") {
+        let obj = await this.db.get(constructKey(docId)).catch((e) => {
+            if (e.code === "LEVEL_NOT_FOUND") {
                 return false;
             }
         });
@@ -363,39 +368,44 @@ class Min {
                 for (let token of Object.keys(tokens)) {
                     promiseArr.push(this.searchIndex(token));
                 }
-                let ops = await Promise.all(promiseArr).then((results) => {
-                    let ops = [];
-                    for (let obj of results) {
-                        //DEL:
-                        delete obj["v"][docId];
-                        obj["l"] = Object.keys(obj["v"]).length;
-                        //there is no other doc related to this index, delete it
-                        if (obj["l"] === 0) {
-                            ops.push({type: "del", key: constructIndex(obj["t"])});
-                        } else {
-                            ops.push({type: "put", key: constructIndex(obj["t"]), value: JSON.stringify(obj)});
+                let ops = await Promise.all(promiseArr)
+                    .then((results) => {
+                        let ops = [];
+                        for (let obj of results) {
+                            //DEL:
+                            delete obj["v"][docId];
+                            obj["l"] = Object.keys(obj["v"]).length;
+                            //there is no other doc related to this index, delete it
+                            if (obj["l"] === 0) {
+                                ops.push({ type: "del", key: constructIndex(obj["t"]) });
+                            } else {
+                                ops.push({ type: "put", key: constructIndex(obj["t"]), value: JSON.stringify(obj) });
+                            }
                         }
-                    }
-                    ops.push({type: "del", key: constructKey(docId)});
-                    ops.push({type: "put", key: "0x000_docCount", value: (this.docCount).toString()});
-                    return ops;
-                }).catch(e => {
-                    console.error("Oops...The Delete operation is interrupted by an internal error.");
-                    return e;
-                });
+                        ops.push({ type: "del", key: constructKey(docId) });
+                        ops.push({ type: "put", key: "0x000_docCount", value: this.docCount.toString() });
+                        return ops;
+                    })
+                    .catch((e) => {
+                        console.error("Oops...The Delete operation is interrupted by an internal error.");
+                        return e;
+                    });
                 return new Promise((resolve, reject) => {
                     if (ops instanceof Error) {
                         this.docCount += 1;
                         reject(ops);
                     }
-                    this.db.batch(ops).then(info => {
-                        resolve("Del: " + key + " successfully.");
-                    }).catch(e => {
-                        this.docCount += 1;
-                        console.error(e);
-                        console.error("Oops...The Delete operation is interrupted by an internal error.");
-                        reject(e);
-                    })
+                    this.db
+                        .batch(ops)
+                        .then((info) => {
+                            resolve("Del: " + key + " successfully.");
+                        })
+                        .catch((e) => {
+                            this.docCount += 1;
+                            console.error(e);
+                            console.error("Oops...The Delete operation is interrupted by an internal error.");
+                            reject(e);
+                        });
                 });
             }
         } catch (e) {
@@ -407,7 +417,7 @@ class Min {
     // Hash : False -> The origin key was input.
     async get(key, hash = false) {
         let docId = hash ? key : md5(key);
-        let obj = await this.db.get(constructKey(docId)).catch(e => {
+        let obj = await this.db.get(constructKey(docId)).catch((e) => {
             return e;
         });
         if (obj instanceof Error) return Promise.reject(obj);
@@ -417,7 +427,7 @@ class Min {
                 key: obj["k"],
                 docId: docId,
                 value: obj["v"],
-                options: this.compressOptions(obj["o"], true)
+                options: this.compressOptions(obj["o"], true),
             };
         } catch (e) {
             console.error("Oops...The Get operation is interrupted by an internal error.");
@@ -428,7 +438,7 @@ class Min {
     // only focus on the value related to the key
     async cleanGet(key, hash = false) {
         let docId = hash ? key : md5(key);
-        let obj = await this.db.get(constructKey(docId)).catch(e => {
+        let obj = await this.db.get(constructKey(docId)).catch((e) => {
             return e;
         });
         if (obj instanceof Error) return Promise.reject(obj);
@@ -445,48 +455,50 @@ class Min {
     async search(content, ops) {
         let tokens = this.tokenizer.tokenize(content);
         let promiseArr = [];
-        let options = ops || {cosineSimilarity: true};
+        let options = ops || { cosineSimilarity: true };
         let topK = options["topK"] || 0;
         for (let token of Object.keys(tokens)) {
             promiseArr.push(this.searchIndex(token));
         }
         let docCount = await this.getDocCount();
-        let results = await Promise.all(promiseArr).then(async results => {
-            let docs = {};
-            for (let result of results) {
-                let len = result["l"];
-                if (len === 0) continue;
-                let idf = 1 + Math.log(docCount / (1 + len));
-                let tfs = result["v"];
-                for (let docId of Object.keys(tfs)) {
-                    let tf_norm = 1 + Math.log(1 + Math.log(tfs[docId]));
-                    docId in docs ? docs[docId] += idf * tf_norm : docs[docId] = idf * tf_norm;
-                }
-            }
-            docs = utils.sortByValue(docs);
-            let docIds = Object.keys(docs);
-            if (topK && topK < docIds.length) docIds = docIds.slice(0, topK - 1);
-            promiseArr = [];
-            for (let docId of docIds) {
-                promiseArr.push(this.get(docId, true))
-            }
-            return await Promise.all(promiseArr).then(res => {
-                for (let obj of res) {
-                    obj["score"] = docs[obj["docId"]];
-                    // simply apply cosine-similarity
-                    if (options["cosineSimilarity"]) {
-                        let resTokens = this.getTokens(obj["key"], obj["value"], obj["options"]);
-                        let cosValue = Math.abs(utils.cosineSimilarity(tokens, resTokens));
-                        obj["score"] = Math.sqrt(cosValue) * obj["score"];
+        let results = await Promise.all(promiseArr)
+            .then(async (results) => {
+                let docs = {};
+                for (let result of results) {
+                    let len = result["l"];
+                    if (len === 0) continue;
+                    let idf = 1 + Math.log(docCount / (1 + len));
+                    let tfs = result["v"];
+                    for (let docId of Object.keys(tfs)) {
+                        let tf_norm = 1 + Math.log(1 + Math.log(tfs[docId]));
+                        docId in docs ? (docs[docId] += idf * tf_norm) : (docs[docId] = idf * tf_norm);
                     }
                 }
-                return res.sort((a, b) => {
-                    return b["score"] - a["score"]
+                docs = utils.sortByValue(docs);
+                let docIds = Object.keys(docs);
+                if (topK && topK < docIds.length) docIds = docIds.slice(0, topK - 1);
+                promiseArr = [];
+                for (let docId of docIds) {
+                    promiseArr.push(this.get(docId, true));
+                }
+                return await Promise.all(promiseArr).then((res) => {
+                    for (let obj of res) {
+                        obj["score"] = docs[obj["docId"]];
+                        // simply apply cosine-similarity
+                        if (options["cosineSimilarity"]) {
+                            let resTokens = this.getTokens(obj["key"], obj["value"], obj["options"]);
+                            let cosValue = Math.abs(utils.cosineSimilarity(tokens, resTokens));
+                            obj["score"] = Math.sqrt(cosValue) * obj["score"];
+                        }
+                    }
+                    return res.sort((a, b) => {
+                        return b["score"] - a["score"];
+                    });
                 });
+            })
+            .catch((e) => {
+                return e;
             });
-        }).catch(e => {
-            return e;
-        });
         if (results instanceof Error) {
             return Promise.reject(results);
         } else {
@@ -494,38 +506,19 @@ class Min {
         }
     }
 
-    printAll() {
-        this.db.createReadStream()
-            .on('data', function (data) {
-                console.log(data.key, '=', data.value)
-            })
-            .on('error', function (err) {
-                console.log('Oh my!', err)
-            })
-            .on('close', function () {
-                console.log('Stream closed')
-            })
-            .on('end', function () {
-                console.log('Stream ended')
-            })
+    async printAll() {
+        for await (const data of this.db.iterator()) {
+            console.log(data);
+        }
     }
 
-    fixDocCount() {
+    async fixDocCount() {
         let docCount = 0;
         let pattern = /^0x002_/;
         let db = this.db;
-        this.db.createReadStream()
-            .on('data', function (data) {
-                if (pattern.test(data.key)) docCount++;
-            })
-            .on('error', function (err) {
-                console.log('Oh my!', err)
-            })
-            .on('end', function () {
-                db.put("0x000_docCount", docCount).then(info => {
-                    console.log("Rescan complete. The docCount is " + docCount.toString());
-                })
-            })
+        for await (const key of db.keys({ lte: "0x003_" })) {
+            if (pattern.test(key)) docCount++;
+        }
     }
 }
 

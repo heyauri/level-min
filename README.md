@@ -29,7 +29,8 @@ In general, a valid [`node-gyp`](https://github.com/nodejs/node-gyp) installatio
 ```js
 const Min = require("level-min");
 
-// Initialise level-min instance by a database address and a object that contain
+// Initialise level-min instance by a database address and a object that contain the leveldb congifuration
+// An absolute path like database address is strongly recommended (if it is relative, the dbAddress=path.join(process.cwd(), InputDbAddress))
 const min = new Min("data",options);
 
 // An example of how to store and index a document.
@@ -40,7 +41,7 @@ min.put("Document1",{
     content:"This is a long text. Balabala. ",
     imgUrl:"http://just-for-example.url.com/img.jpg"
 },{
-    key-weight:0,
+    keyWeight:0,
     valueWeightCalc:true,
     defaultValueWeight:0,
     valueWeights: { title: 5, content: 1 }

@@ -33,7 +33,7 @@ min.put("Document1",{
     content:"This is a long text. Balabala. ",
     imgUrl:"http://just-for-example.url.com/img.jpg"
 },{
-    key-weight:0,
+    keyWeight:0,
     valueWeightCalc:true,
     defaultValueWeight:0,
     valueWeights: { title: 5, content: 1 }

@@ -1,6 +1,6 @@
 {
   "name": "level-min",
-  "version": "1.1.0",
+  "version": "2.0.0",
   "description": "A light-weight full-text search library for the browser and Node.js, aimed to minimize the workload of developers in usage. Using LevelDB as storage backend.",
   "main": "lib/main.js",
   "repository": {
@@ -11,8 +11,8 @@
     "leveldb"
   ],
   "scripts": {
-    "test": "babel src -d lib && node test.js",
-    "compile": "babel src -d lib"
+    "test": "tsc && node test.js",
+    "compile": "tsc"
   },
   "author": "rui",
   "license": "MIT",
@@ -24,20 +24,20 @@
   },
   "homepage": "https://github.com/heyauri/level-min#readme",
   "dependencies": {
-    "deasync": "^0.1.21",
+    "deasync": "^0.1.28",
     "franc": "^5.0.0",
     "langjudge": "^0.3.0",
-    "level": "^7.0.0",
+    "level": "^8.0.0",
     "md5": "^2.3.0",
-    "natural": "^5.0.3",
+    "natural": "^5.2.3",
     "segmentit": "^2.0.3",
-    "stopword": "^1.0.7"
+    "stopword": "^2.0.2"
   },
   "devDependencies": {
-    "@babel/cli": "^7.10.5",
-    "@babel/core": "^7.11.4",
-    "@babel/plugin-transform-runtime": "^7.11.0",
-    "@babel/preset-env": "^7.11.0",
-    "@types/node": "^16.6.0"
+    "@babel/cli": "^7.18.10",
+    "@babel/core": "^7.18.10",
+    "@babel/plugin-transform-runtime": "^7.18.10",
+    "@babel/preset-env": "^7.18.10",
+    "@types/node": "^18.7.9"
   }
 }

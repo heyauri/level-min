@@ -1,0 +1,10 @@
+README_zh.md
+test.js
+.babelrc
+.idea
+package-lock.json
+src
+pnpm-lock.yaml
+tmp
+scripts
+dictRaw

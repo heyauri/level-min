@@ -1,5 +1,5 @@
 export function getType(v) {
-    return Object.prototype.toString.call(v)
+    return Object.prototype.toString.call(v);
 }
 
 export function isString(v) {
@@ -26,22 +26,21 @@ export function isFunction(v) {
     return getType(v) === "[object Function]";
 }
 
-
-//t : coefficient of the b value
+//t : coefficient(weight) of the b value
 export function mergeTokens(a, b, t) {
     try {
         if ((!t && t !== 0) || !isNumber(t)) t = 1;
         for (let key of Object.keys(b)) {
             if (key in a) {
                 if (isNumber(a[key]) && isNumber(b[key])) {
-                    a[key] = a[key] + b[key] * t
+                    a[key] = a[key] + b[key] * t;
                 }
             } else {
                 a[key] = b[key] * t;
             }
         }
     } catch (e) {
-        console.error("Oops..There are some errors in tokens' merging process.")
+        console.error("Oops..There are some errors in tokens' merging process.", e);
     }
 }
 
@@ -62,8 +61,7 @@ export function diffTokens(t_old, t_new) {
             update_tokens[key] = t_new[key];
         }
     }
-
-    return update_tokens
+    return update_tokens;
 }
 
 export function sortByValue(obj, des = true) {
@@ -73,47 +71,52 @@ export function sortByValue(obj, des = true) {
         })
         .reduce((prev, cur) => {
             prev[cur] = obj[cur];
-            return prev
+            return prev;
         }, {});
 }
 
-export function cosineSimilarity(oa,ob){
-    let upper=0,left=0,right=0;
-    for(let key of Object.keys(oa)){
-        if(key in ob){
-            upper += oa[key]*ob[key];
+export function cosineSimilarity(oa, ob) {
+    let upper = 0,
+        left = 0,
+        right = 0;
+    for (let key of Object.keys(oa)) {
+        if (key in ob) {
+            upper += oa[key] * ob[key];
         }
-        left += oa[key]**2;
+        left += oa[key] ** 2;
     }
-    for(let key of Object.keys(ob)){
-        right += ob[key]**2;
+    for (let key of Object.keys(ob)) {
+        right += ob[key] ** 2;
     }
-    return upper/(Math.sqrt(left)*Math.sqrt(right));
+    return upper / (Math.sqrt(left) * Math.sqrt(right));
 }
 
 export function stringify(input) {
     return isString(input) ? input : JSON.stringify(input);
 }
 
-export function parse(input:string) {
-    try{
+export function parse(input: string) {
+    try {
         return JSON.parse(input);
-    }catch (e) {
+    } catch (e) {
         return input;
     }
 }
 
-export function ToCDB(str) {
+export function toCDB(str) {
     let tmp = "";
     for (let i = 0; i < str.length; i++) {
         if (str.charCodeAt(i) > 65248 && str.charCodeAt(i) < 65375) {
             tmp += String.fromCharCode(str.charCodeAt(i) - 65248);
-        }
-        else {
+        } else {
             tmp += String.fromCharCode(str.charCodeAt(i));
         }
     }
-    return tmp
+    return tmp;
 }
+
+const zlib = require("zlib");
+export const zip = zlib.gzipSync;
+export const unzip = zlib.gunzipSync;
 
 
