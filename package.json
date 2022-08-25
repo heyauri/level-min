@@ -11,10 +11,9 @@
     "leveldb"
   ],
   "scripts": {
-    "test": "tsc && node test.js",
     "compile": "tsc"
   },
-  "author": "rui",
+  "author": "heyauri",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/heyauri/level-min/issues"
@@ -25,6 +24,7 @@
   "homepage": "https://github.com/heyauri/level-min#readme",
   "dependencies": {
     "deasync": "^0.1.28",
+    "fast-json-stringify": "^5.1.0",
     "franc": "^5.0.0",
     "langjudge": "^0.3.0",
     "level": "^8.0.0",

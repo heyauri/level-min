@@ -186,8 +186,9 @@ class Min {
                     if (!(docId in obj["v"])) {
                         obj["l"] += 1;
                     }
+                    // indexes
                     obj["v"][docId] = tokens[obj["t"]];
-                    ops.push({ type: "put", key: constructIndex(obj["t"]), value: JSON.stringify(obj) });
+                    ops.push({ type: "put", key: constructIndex(obj["t"]), value: utils.stringifyIndex(obj) });
                 }
                 ops.push({
                     type: "put",
@@ -255,9 +256,9 @@ class Min {
                         }
                         obj["v"][docId] = tokens[obj["t"]];
                     }
-                    ops.push({ type: "put", key: constructIndex(obj["t"]), value: JSON.stringify(obj) });
+                    // indexes
+                    ops.push({ type: "put", key: constructIndex(obj["t"]), value: utils.stringifyIndex(obj) });
                 }
-
                 ops.push({
                     type: "put",
                     key: constructKey(docId),
@@ -379,7 +380,7 @@ class Min {
                             if (obj["l"] === 0) {
                                 ops.push({ type: "del", key: constructIndex(obj["t"]) });
                             } else {
-                                ops.push({ type: "put", key: constructIndex(obj["t"]), value: JSON.stringify(obj) });
+                                ops.push({ type: "put", key: constructIndex(obj["t"]), value: utils.stringifyIndex(obj) });
                             }
                         }
                         ops.push({ type: "del", key: constructKey(docId) });

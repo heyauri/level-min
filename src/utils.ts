@@ -91,6 +91,28 @@ export function cosineSimilarity(oa, ob) {
     return upper / (Math.sqrt(left) * Math.sqrt(right));
 }
 
+const fastJson = require("fast-json-stringify");
+const indexSchema = {
+    title:"indexSchema",
+    type:"object",
+    properties:{
+        t:{
+            type:"string"
+        },
+        l:{
+            type:"number"
+        },
+        v:{
+            type:"object",
+            patternProperties:{
+                ".*":{
+                    type:"number"
+                }
+            }
+        }
+    }
+}
+export let stringifyIndex = fastJson(indexSchema);
 export function stringify(input) {
     return isString(input) ? input : JSON.stringify(input);
 }
