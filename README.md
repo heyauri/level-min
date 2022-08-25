@@ -153,7 +153,7 @@ min.get("example").then(info=>{
 An example for the search:
 ```js
 let options={
-    topK:10, // when we only want the top 10 results
+    limit:10, // when we only want the top 10 results
     cosineSimilarity:true // if you want to combine the tf-idf and cosine similarity , false :tf-idf alone , true: combine
 }
 min.search("Shakespeare").then(results=>{

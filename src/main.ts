@@ -452,32 +452,35 @@ class Min {
         }
     }
 
+    static async calTfIdf(promise, docCount, docs) {
+        let result = await promise;
+        let len = result["l"];
+        if (len === 0) return Promise.resolve(0);
+        let idf = 1 + Math.log(docCount / (1 + len));
+        let tfs = result["v"];
+        for (let docId in tfs) {
+            let tf_norm = 1 + Math.log1p(Math.log1p(tfs[docId]));
+            docId in docs ? (docs[docId] += idf * tf_norm) : (docs[docId] = idf * tf_norm);
+        }
+        return Promise.resolve(docs);
+    }
+
     //Search the content by tf-idf & cosine-similarity.
     async search(content, ops) {
         let tokens = this.tokenizer.tokenize(content);
         let promiseArr = [];
-        let options = ops || { cosineSimilarity: true };
-        let topK = options["topK"] || 0;
-        for (let token of Object.keys(tokens)) {
-            promiseArr.push(this.searchIndex(token));
-        }
+        // set cosineSimilarity to false to speed up the search operation.
+        let options = ops || { cosineSimilarity: false };
+        let limit = options["limit"] || 0;
+        let docs = {};
         let docCount = await this.getDocCount();
+        for (let token of Object.keys(tokens)) {
+            promiseArr.push(Min.calTfIdf(this.searchIndex(token), docCount, docs));
+        }
         let results = await Promise.all(promiseArr)
-            .then(async (results) => {
-                let docs = {};
-                for (let result of results) {
-                    let len = result["l"];
-                    if (len === 0) continue;
-                    let idf = 1 + Math.log(docCount / (1 + len));
-                    let tfs = result["v"];
-                    for (let docId of Object.keys(tfs)) {
-                        let tf_norm = 1 + Math.log(1 + Math.log(tfs[docId]));
-                        docId in docs ? (docs[docId] += idf * tf_norm) : (docs[docId] = idf * tf_norm);
-                    }
-                }
+            .then(async (res) => {
                 docs = utils.sortByValue(docs);
                 let docIds = Object.keys(docs);
-                if (topK && topK < docIds.length) docIds = docIds.slice(0, topK - 1);
                 promiseArr = [];
                 for (let docId of docIds) {
                     promiseArr.push(this.get(docId, true));
@@ -488,13 +491,15 @@ class Min {
                         // simply apply cosine-similarity
                         if (options["cosineSimilarity"]) {
                             let resTokens = this.getTokens(obj["key"], obj["value"], obj["options"]);
-                            let cosValue = Math.abs(utils.cosineSimilarity(tokens, resTokens));
+                            let cosValue = 0.01 + Math.abs(utils.cosineSimilarity(tokens, resTokens));
                             obj["score"] = Math.sqrt(cosValue) * obj["score"];
                         }
                     }
-                    return res.sort((a, b) => {
+                    let final = res.sort((a, b) => {
                         return b["score"] - a["score"];
                     });
+                    if (limit && limit < final.length) final = final.slice(0, limit - 1);
+                    return final;
                 });
             })
             .catch((e) => {
