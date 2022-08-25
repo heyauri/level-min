@@ -9,3 +9,5 @@ tmp
 scripts
 dictRaw
 .git
+data
+tsconfig.json

@@ -11,6 +11,7 @@ specifiers:
   franc: ^5.0.0
   langjudge: ^0.3.0
   level: ^8.0.0
+  level-min: ^2.0.0
   md5: ^2.3.0
   natural: ^5.2.3
   segmentit: ^2.0.3
@@ -22,6 +23,7 @@ dependencies:
   franc: 5.0.0
   langjudge: 0.3.0
   level: 8.0.0
+  level-min: 2.0.0
   md5: 2.3.0
   natural: 5.2.3
   segmentit: 2.0.3
@@ -1826,6 +1828,21 @@ packages:
 
   /langjudge/0.3.0:
     resolution: {integrity: sha512-5dRVEm3IkPC3GOA+prhwQuCtpLAczNiV4zBn2jmsSJpd+kwKitgjlESrF2YMPzECPgEkyfaBiZCVdptjzRQogA==}
+    dev: false
+
+  /level-min/2.0.0:
+    resolution: {integrity: sha512-Eclxl+xy5lCWqrT106E1zlfsvpY93iENoIWF34beF3V9laKoMCgiRw1dUGKQNQ1iHnPOEo5l5pRrqyjbmb9YxQ==}
+    engines: {node: '>=6'}
+    dependencies:
+      deasync: 0.1.28
+      fast-json-stringify: 5.1.0
+      franc: 5.0.0
+      langjudge: 0.3.0
+      level: 8.0.0
+      md5: 2.3.0
+      natural: 5.2.3
+      segmentit: 2.0.3
+      stopword: 2.0.2
     dev: false
 
   /level-supports/4.0.1:

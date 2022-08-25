@@ -28,6 +28,7 @@
     "franc": "^5.0.0",
     "langjudge": "^0.3.0",
     "level": "^8.0.0",
+    "level-min": "^2.0.0",
     "md5": "^2.3.0",
     "natural": "^5.2.3",
     "segmentit": "^2.0.3",
