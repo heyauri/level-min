@@ -29,13 +29,13 @@ In general, a valid [`node-gyp`](https://github.com/nodejs/node-gyp) installatio
 ```js
 const Min = require("level-min");
 
-// Initialise level-min instance by a database address and a object that contain the leveldb congifuration
+// Initialize level-min instance by a database address and a object that contain the leveldb configuration
 // An absolute path like database address is strongly recommended (if it is relative, the dbAddress=path.join(process.cwd(), InputDbAddress))
 const min = new Min("data",options);
 
 // An example of how to store and index a document.
 // Using such a schema, only the title and content in the value object will be indexed.
-// So that those useless indexes of the value (i.e. a field of imgUrl) will not be storeed.
+// So that those useless indexes of the value (i.e. a field of imgUrl) will not be stored.
 min.put("Document1",{
     title:"Introduction of level-min",
     content:"This is a long text. Balabala. ",
@@ -74,7 +74,7 @@ Using as ` const min = Min(location)` is  highly recommended.
 
 The optional `options` argument may contain:
 
-- `createIfMissing` (boolean, default: `true`): If `true`, will initialise an empty database at the specified location if one doesn't already exist. If `false` and a database doesn't exist you will receive an error in your `open()` callback and your database won't open.
+- `createIfMissing` (boolean, default: `true`): If `true`, will initialize an empty database at the specified location if one doesn't already exist. If `false` and a database doesn't exist you will receive an error in your `open()` callback and your database won't open.
 
 - `errorIfExists` (boolean, default: `false`): If `true`, you will receive an error in your `open()` callback if the database exists at the specified location.
 
@@ -131,7 +131,7 @@ Delete the record of key inside the db. If there are any associated indexes that
 ### `min.get(key)`
 
 
-`get()` is the primary method for fetching data from the store. The `key` should be a String. If it doesn't exist in the store then the promise will be rejecedt. A not-found err object will be of type `'NotFoundError'` so you can `err.type == 'NotFoundError'` or you can perform a truthy test on the property `err.notFound`.
+`get()` is the primary method for fetching data from the store. The `key` should be a String. If it doesn't exist in the store then the promise will be rejected. A not-found err object will be of type `'NotFoundError'` so you can `err.type == 'NotFoundError'` or you can perform a truthy test on the property `err.notFound`.
 
 ```js
 min.get("example").then(info=>{
@@ -147,7 +147,7 @@ min.get("example").then(info=>{
 <a name="search"></a>
 
 ### `min.search(content, [options,])`
-`search()` function will tokenize the input and then query them inside the db. If mutiple results are returned, their scores will be calculated using <b>tf-idf</b> algorithm and <b>Cosine Similarity</b>. The top-k of the results sorted by their scores
+`search()` function will tokenize the input and then query them inside the db. If multiple results are returned, their scores will be calculated using <b>tf-idf</b> algorithm and <b>Cosine Similarity</b>. The top-k of the results sorted by their scores
  in a descending order will finally be returned via promise.
 
 An example for the search:
@@ -159,7 +159,7 @@ let options={
 min.search("Shakespeare").then(results=>{
     // results in order
 }).catch(e=>{
-    //execption
+    //exception
 })
 ```
 
@@ -189,7 +189,7 @@ min.tokenizer.setCustomStemmer(stemmer);
 `min.tokenizer.setCustomStemmer()` will accept an object that with a function named `stem()`
 that accept a token and return a processed string. Or an error will be logged in console.
 
-If the develper want to switch the tokenizer or the stemmer back to the integrated one, `min.tokenizer.configTokenizer()` can be used.
+If the developer want to switch the tokenizer or the stemmer back to the integrated one, `min.tokenizer.configTokenizer()` can be used.
 
 An example:
 ```js
