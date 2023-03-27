@@ -11,3 +11,4 @@ dictRaw
 .git
 data
 tsconfig.json
+.DS_Store
