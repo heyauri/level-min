@@ -44,7 +44,8 @@ export function mergeTokens(a, b, t) {
     }
 }
 
-export function diffTokens(t_old, t_new) {
+export function diffTokens(t1, t2) {
+    let t_old = { ...t1 }, t_new = { ...t2 };
     let update_tokens = {};
     for (let key of Object.keys(t_old)) {
         if (!(key in t_new)) {
@@ -103,16 +104,48 @@ const indexSchema = {
             type: "number",
         },
         v: {
-            type: "object",
-            patternProperties: {
-                ".*": {
-                    type: "number",
-                },
-            },
+            type: "string",
         },
     },
 };
-export let stringifyIndex = fastJson(indexSchema);
+
+export const indexOperator = {
+    stringifyIndex: fastJson(indexSchema),
+    updateIndexValue: function (v, key, val) {
+        let idx = v.indexOf(key);
+        if (idx < 0 && val > 0) {
+            if (v.length) {
+                return v + `,${key}:${val}`
+            } else {
+                return `${key}:${val}`;
+            }
+        }
+        if (idx > -1 && val > 0) {
+            return v.replace(new RegExp(`${key}:[0-9]+`), function (str) {
+                return str.replace(/:[0-9]+$/, `:${val}`);
+            })
+        }
+        if (idx > -1 && val <= 0) {
+            return v.replace(new RegExp(`${key}:[0-9]+`), "").replace(/,+/gi, ",").replace(/^,/, "").replace(/,$/, "");
+        }
+        if (idx < 0 && val <= 0) {
+            return v;
+        }
+    },
+    getIndexLength: function (v) {
+        let matches = v.match(/,/g);
+        if (!matches && v.length == 0) {
+            return 0;
+        }
+        if (!matches && v.length > 0) {
+            return 1;
+        }
+        if (matches) {
+            return matches.length + 1;
+        }
+    }
+}
+
 export function stringify(input) {
     return isString(input) ? input : JSON.stringify(input);
 }

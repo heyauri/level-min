@@ -239,84 +239,91 @@ function tokenFilter(token) {
     return true;
 }
 
-function tokenize(sentence) {
-    if (typeof sentence !== "string") {
-        if (utils.isNumber(sentence)) {
-            return sentence.toString();
-        } else {
-            sentence = JSON.stringify(sentence);
-        }
-    }
-    sentence = utils.toCDB(sentence);
-    let langType = langTypeDetect(sentence);
-    let tokens = [];
-    try {
-        if (tokenizerConfig.customTokenizer) {
-            tokens = customTokenizer.tokenize(sentence);
-        } else if (langType === "Chinese") {
-            let arr = segmentit.doSegment(sentence, {
-                stripPunctuation: true,
-            });
-            for (let item of arr) {
-                tokens.push(item.w);
-            }
-        } else {
-            if (langType in tokenizers) {
-                tokens = tokenizerFuns[langType].tokenize(sentence);
-            } else {
-                tokens = defaultTokenizer.tokenize(sentence);
-            }
-        }
-    } catch (e) {
-        console.error(e);
-        tokens = defaultTokenizer.tokenize(sentence);
-    }
+let regex_1 = /(‘|’|“|”|，|。|（|）|·|`|\(|\)|;|,)/g
 
-    tokens = tokens.map((token) => {
-        return utils.toCDB(token.trim().toLowerCase());
-    });
-    //Stopwords
-    try {
-        if (langType in stopwords) {
-            tokens = stopword.removeStopwords(tokens, stopwordObjs[langType]);
-        }
-        if (tokenizerConfig.customStopword) {
-            tokens = stopword.removeStopwords(tokens, customStopwords);
-        }
-    } catch (e) {
-        console.error(e);
-    }
-    //Stemmers
-    try {
-        if (tokenizerConfig.customStemmer) {
-            for (let k in tokens) {
-                tokens[k] = customStemmer.stem(tokens[k]);
-            }
-        } else if (langType in stemmerFuns) {
-            let stemmer = stemmerFuns[langType];
-            for (let k in tokens) {
-                tokens[k] = stemmer.stem(tokens[k]);
-            }
-        }
-    } catch (e) {
-        console.error(e);
-    }
-    //Custom filters
-    if (filters.length > 0) {
-        let tmp = [];
-        for (let token of tokens) {
-            if (tokenFilter(token)) {
-                tmp.push(token);
-            }
-        }
-        tokens = tmp;
-    }
+function tokenize(paragraph) {
+    if (!paragraph) return {};
+    let para = paragraph.replace(regex_1, "\n");
+    let sentences = para.split("\n");
     let result = {};
-    for (let item of tokens) {
-        if (!Reflect.has(result, item)) {
-            result[item] = 1;
-        } else {
-            result[item] += 1;
+    for (let sentence of sentences) {
+        if (typeof sentence !== "string") {
+            if (utils.isNumber(sentence)) {
+                return sentence.toString();
+            } else {
+                sentence = JSON.stringify(sentence);
+            }
+        }
+        sentence = utils.toCDB(sentence);
+        let langType = langTypeDetect(sentence);
+        let tokens = [];
+        try {
+            if (tokenizerConfig.customTokenizer) {
+                tokens = customTokenizer.tokenize(sentence);
+            } else if (langType === "Chinese") {
+                let arr = segmentit.doSegment(sentence, {
+                    stripPunctuation: true,
+                });
+                for (let item of arr) {
+                    tokens.push(item.w);
+                }
+            } else {
+                if (langType in tokenizers) {
+                    tokens = tokenizerFuns[langType].tokenize(sentence);
+                } else {
+                    tokens = defaultTokenizer.tokenize(sentence);
+                }
+            }
+        } catch (e) {
+            console.error(e);
+            tokens = defaultTokenizer.tokenize(sentence);
+        }
+
+        tokens = tokens.map((token) => {
+            return utils.toCDB(token.trim().toLowerCase());
+        });
+        //Stop words
+        try {
+            if (langType in stopwords) {
+                tokens = stopword.removeStopwords(tokens, stopwordObjs[langType]);
+            }
+            if (tokenizerConfig.customStopword) {
+                tokens = stopword.removeStopwords(tokens, customStopwords);
+            }
+        } catch (e) {
+            console.error(e);
+        }
+        //Stemmers
+        try {
+            if (tokenizerConfig.customStemmer) {
+                for (let k in tokens) {
+                    tokens[k] = customStemmer.stem(tokens[k]);
+                }
+            } else if (langType in stemmerFuns) {
+                let stemmer = stemmerFuns[langType];
+                for (let k in tokens) {
+                    tokens[k] = stemmer.stem(tokens[k]);
+                }
+            }
+        } catch (e) {
+            console.error(e);
+        }
+        //Custom filters
+        if (filters.length > 0) {
+            let tmp = [];
+            for (let token of tokens) {
+                if (tokenFilter(token)) {
+                    tmp.push(token);
+                }
+            }
+            tokens = tmp;
+        }
+        for (let item of tokens) {
+            if (!Reflect.has(result, item)) {
+                result[item] = 1;
+            } else {
+                result[item] += 1;
+            }
         }
     }
     //console.log(langType,result);

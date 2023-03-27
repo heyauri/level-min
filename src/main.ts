@@ -41,10 +41,12 @@ class Min {
 
     setDB(dbAddress, options) {
         try {
-            if (!existsSync(dbAddress)) {
-                dbAddress = path.join(process.cwd(), dbAddress);
-            }
             options = options || {};
+            if (!existsSync(dbAddress)) {
+                if (!options["absoluteAddress"]) {
+                    dbAddress = path.join(process.cwd(), dbAddress);
+                }
+            }
             this.db = new Level(dbAddress, options);
             let _this = this;
             let done = false;
@@ -155,7 +157,7 @@ class Min {
                         resolve({
                             t: token,
                             l: 0,
-                            v: {},
+                            v: "",
                         });
                     } else {
                         console.error("searchIndex", e);
@@ -171,25 +173,28 @@ class Min {
         });
     }
 
+    static async indexesPreProcess(promise, docId, tokens, ops) {
+        let obj = await promise;
+        if (obj["v"].indexOf(docId) < 0) {
+            obj["l"] += 1;
+        }
+        obj["v"] = utils.indexOperator.updateIndexValue(obj["v"], docId, tokens[obj["t"]]);
+        let da = { type: "put", key: constructIndex(obj["t"]), value: utils.indexOperator.stringifyIndex(obj) };
+        ops.push(da);
+        return Promise.resolve(obj);
+    }
+
     async create(key, value, options) {
         let docId = md5(key);
         this.docCount += 1;
         let tokens = this.getTokens(key, value, options);
         let promiseArr = [];
+        let ops = [];
         for (let token of Object.keys(tokens)) {
-            promiseArr.push(this.searchIndex(token));
+            promiseArr.push(Min.indexesPreProcess(this.searchIndex(token), docId, tokens, ops));
         }
-        let ops = await Promise.all(promiseArr)
+        ops = await Promise.all(promiseArr)
             .then((results) => {
-                let ops = [];
-                for (let obj of results) {
-                    if (!(docId in obj["v"])) {
-                        obj["l"] += 1;
-                    }
-                    // indexes
-                    obj["v"][docId] = tokens[obj["t"]];
-                    ops.push({ type: "put", key: constructIndex(obj["t"]), value: utils.stringifyIndex(obj) });
-                }
                 ops.push({
                     type: "put",
                     key: constructKey(docId),
@@ -229,7 +234,6 @@ class Min {
         let docId = md5(key);
         let tokens = this.getTokens(key, value, options);
         let prevTokens = this.getTokens(prev_obj["k"], prev_obj["v"], prev_obj["o"]);
-
         let diffTokens = utils.diffTokens(prevTokens, tokens);
         let promiseArr = [];
         for (let token of Object.keys(diffTokens)) {
@@ -242,8 +246,8 @@ class Min {
                 for (let obj of results) {
                     //DEL:
                     if (tokens[obj["t"]] <= 0) {
-                        delete obj["v"][docId];
-                        obj["l"] = Object.keys(obj["v"]).length;
+                        obj["v"] = utils.indexOperator.updateIndexValue(obj["v"], docId, 0);
+                        obj["l"] = utils.indexOperator.getIndexLength(obj["v"]);
                         //there is no other doc related to this index, delete it
                         if (obj["l"] === 0) {
                             ops.push({ type: "del", key: constructIndex(obj["t"]) });
@@ -251,13 +255,11 @@ class Min {
                         }
                     } else {
                         //UPDATE
-                        if (!(docId in obj["v"])) {
-                            obj["l"] += 1;
-                        }
-                        obj["v"][docId] = tokens[obj["t"]];
+                        obj["v"] = utils.indexOperator.updateIndexValue(obj["v"], docId, tokens[obj["t"]]);
+                        obj["l"] = utils.indexOperator.getIndexLength(obj["v"]);
                     }
                     // indexes
-                    ops.push({ type: "put", key: constructIndex(obj["t"]), value: utils.stringifyIndex(obj) });
+                    ops.push({ type: "put", key: constructIndex(obj["t"]), value: utils.indexOperator.stringifyIndex(obj) });
                 }
                 ops.push({
                     type: "put",
@@ -310,6 +312,7 @@ class Min {
                 return await this.create(key, value, options);
             } else {
                 obj = JSON.parse(obj);
+                obj["o"] = this.compressOptions(obj["o"], true);
                 if (key === obj["k"] && value === obj["v"] && options === obj["o"]) {
                     return true;
                 } else {
@@ -325,7 +328,7 @@ class Min {
         return md5(key);
     }
 
-    // just update the value inside without reindexing
+    // just update the value inside without re-index
     // It is a very dangerous operation: some indexes may remain till the world's end.
     async cleanUpdate(key, value) {
         let docId = md5(key);
@@ -374,13 +377,13 @@ class Min {
                         let ops = [];
                         for (let obj of results) {
                             //DEL:
-                            delete obj["v"][docId];
-                            obj["l"] = Object.keys(obj["v"]).length;
+                            obj["v"] = utils.indexOperator.updateIndexValue(obj["v"], docId, 0);
+                            obj["l"] = utils.indexOperator.getIndexLength(obj["v"]);
                             //there is no other doc related to this index, delete it
                             if (obj["l"] === 0) {
                                 ops.push({ type: "del", key: constructIndex(obj["t"]) });
                             } else {
-                                ops.push({ type: "put", key: constructIndex(obj["t"]), value: utils.stringifyIndex(obj) });
+                                ops.push({ type: "put", key: constructIndex(obj["t"]), value: utils.indexOperator.stringifyIndex(obj) });
                             }
                         }
                         ops.push({ type: "del", key: constructKey(docId) });
@@ -458,8 +461,11 @@ class Min {
         if (len === 0) return Promise.resolve(0);
         let idf = 1 + Math.log(docCount / (1 + len));
         let tfs = result["v"];
-        for (let docId in tfs) {
-            let tf_norm = 1 + Math.log1p(Math.log1p(tfs[docId]));
+        for (let item of tfs.split(",")) {
+            let pair = item.split(":");
+            let docId = pair[0], tf = pair[1];
+            let tf_norm = 1 + Math.log1p(tf);
+            console.log(result, tf, tf_norm, idf)
             docId in docs ? (docs[docId] += idf * tf_norm) : (docs[docId] = idf * tf_norm);
         }
         return Promise.resolve(docs);
@@ -474,15 +480,14 @@ class Min {
         let limit = options["limit"] || 0;
         let docs = {};
         let docCount = await this.getDocCount();
-        for (let token of Object.keys(tokens)) {
+        for (let token in tokens) {
             promiseArr.push(Min.calTfIdf(this.searchIndex(token), docCount, docs));
         }
         let results = await Promise.all(promiseArr)
             .then(async (res) => {
                 docs = utils.sortByValue(docs);
-                let docIds = Object.keys(docs);
                 promiseArr = [];
-                for (let docId of docIds) {
+                for (let docId in docs) {
                     promiseArr.push(this.get(docId, true));
                 }
                 return await Promise.all(promiseArr).then((res) => {
@@ -522,7 +527,7 @@ class Min {
         let docCount = 0;
         let pattern = /^0x002_/;
         let db = this.db;
-        for await (const key of db.keys({ lte: "0x003_" })) {
+        for await (const key of db.keys({ lte: "0x003_", gte: "0x002_" })) {
             if (pattern.test(key)) docCount++;
         }
     }
