@@ -120,6 +120,7 @@ class Min {
             } else if (utils.isObject(value)) {
                 for (let key of Object.keys(value)) {
                     if (Reflect.has(valueWeights, key) || defaultValueWeight > 0) {
+                        if (Reflect.has(valueWeights, key) && valueWeights[key] === 0) continue;
                         tempTokens = this.tokenizer.tokenize(value[key]);
                         let weight = Reflect.has(valueWeights, key) ? valueWeights[key] : defaultValueWeight;
                         utils.mergeTokens(tokens, tempTokens, weight);
@@ -465,7 +466,6 @@ class Min {
             let pair = item.split(":");
             let docId = pair[0], tf = pair[1];
             let tf_norm = 1 + Math.log1p(tf);
-            console.log(result, tf, tf_norm, idf)
             docId in docs ? (docs[docId] += idf * tf_norm) : (docs[docId] = idf * tf_norm);
         }
         return Promise.resolve(docs);
@@ -530,6 +530,7 @@ class Min {
         for await (const key of db.keys({ lte: "0x003_", gte: "0x002_" })) {
             if (pattern.test(key)) docCount++;
         }
+        db.put("0x000_docCount", docCount);
     }
 }
 

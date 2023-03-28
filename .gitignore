@@ -112,3 +112,4 @@ scripts
 dictRaw
 pnpm-lock.yaml
 .DS_Store
+test*

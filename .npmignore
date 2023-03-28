@@ -12,3 +12,4 @@ dictRaw
 data
 tsconfig.json
 .DS_Store
+test*

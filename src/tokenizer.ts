@@ -243,7 +243,19 @@ let regex_1 = /(‘|’|“|”|，|。|（|）|·|`|\(|\)|;|,)/g
 
 function tokenize(paragraph) {
     if (!paragraph) return {};
-    let para = paragraph.replace(regex_1, "\n");
+    if (!utils.isString(paragraph)) {
+        try {
+            if (utils.isNumber(paragraph) || utils.isBoolean(paragraph)) {
+                paragraph = paragraph.toString();
+            }
+            else if (utils.isArray(paragraph) || utils.isObject(paragraph)) {
+                paragraph = JSON.stringify(paragraph);
+            }
+        } catch (e) {
+            return {};
+        }
+    }
+    let para = paragraph.replace("�", "").replace(regex_1, "\n");
     let sentences = para.split("\n");
     let result = {};
     for (let sentence of sentences) {
