@@ -1,9 +1,9 @@
-import * as franc from "franc";
+import { franc } from "franc";
 import * as langjudge from "langjudge";
 import * as natural from "natural";
 import { Segment, useDefault } from "segmentit";
 import * as stopword from "stopword";
-import * as utils from "./utils";
+import * as utils from "../utils/utils";
 
 const fs = require("fs");
 const path = require("path");
@@ -11,8 +11,8 @@ const path = require("path");
 const segmentit = useDefault(new Segment());
 const defaultTokenizer = new natural.WordTokenizer();
 
-// Load all custom Chiness Dict
-let baseDictDir = path.join(__dirname, "../dict");
+// Load all custom Chinese Dict
+let baseDictDir = path.join(__dirname, "../../dict");
 for (let f of fs.readdirSync(baseDictDir)) {
     let fp = path.join(baseDictDir, f);
     let dict = utils.unzip(fs.readFileSync(fp)).toString();
@@ -124,9 +124,7 @@ function loadCHSCustomStopword(stopwords) {
     }
 }
 
-function regulateLangCode(code) {
-    return Reflect.has(langCodes, code) ? langCodes[code] : "Default";
-}
+// Use regulateLangCode function from utils
 
 function judge_type(types) {
     let langType = "Default";
@@ -143,14 +141,14 @@ function judge_type(types) {
 }
 
 function langTypeDetect(sentence) {
-    //language Detect
+    // Language Detect
     let langType = franc(sentence, { only: supportLangCodes });
     let possibleTypes = langjudge.langAllContain(sentence);
-    //This is the backup for some situations that the franc can not detect the language and return "und"
+    // This is the backup for some situations that the franc can not detect the language and return "und"
     if (langType === "und" || possibleTypes.indexOf("Chinese") > -1) {
         langType = judge_type(possibleTypes);
     } else {
-        langType = regulateLangCode(langType);
+        langType = utils.regulateLangCode(langType, langCodes);
     }
     return langType;
 }
@@ -203,7 +201,7 @@ function setCustomStopwords(stopwords) {
     }
 }
 
-//filter should be a function that return true => the token will be kept or false => the token will be abandoned
+// Filter should be a function that return true => the token will be kept or false => the token will be abandoned
 function applyCustomTokenFilter(filter) {
     if (utils.isArray(filter)) {
         filter.forEach((f) => {
@@ -275,7 +273,7 @@ function tokenize(sentence) {
     tokens = tokens.map((token) => {
         return utils.toCDB(token.trim().toLowerCase());
     });
-    //Stopwords
+    // Stopwords
     try {
         if (langType in stopwords) {
             tokens = stopword.removeStopwords(tokens, stopwordObjs[langType]);
@@ -286,7 +284,7 @@ function tokenize(sentence) {
     } catch (e) {
         console.error(e);
     }
-    //Stemmers
+    // Stemmers
     try {
         if (tokenizerConfig.customStemmer) {
             for (let k in tokens) {
@@ -301,7 +299,7 @@ function tokenize(sentence) {
     } catch (e) {
         console.error(e);
     }
-    //Custom filters
+    // Custom filters
     if (filters.length > 0) {
         let tmp = [];
         for (let token of tokens) {

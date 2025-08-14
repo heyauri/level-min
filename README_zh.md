@@ -1,6 +1,6 @@
 # level-min
 
-一个针对browser和Node.js的轻量级全文搜索库，旨在最小化开发人员的使用工作量。使用LevelDB作为存储后端。
+一个针对Node.js的轻量级全文搜索库，旨在最小化开发人员的工作量。使用LevelDB作为存储后端。
 
 [![npm](https://img.shields.io/npm/v/level-min.svg?label=&logo=npm)](https://www.npmjs.com/package/level-min)
 [![Node version](https://img.shields.io/node/v/level-min.svg)](https://www.npmjs.com/package/level-min)
@@ -22,12 +22,15 @@ In general, a valid [`node-gyp`](https://github.com/nodejs/node-gyp) installatio
 ```js
 const Min = require("level-min");
 
-// Initialise level-min instance by a database address and a object that contain
-const min = new Min("data",options);
+// 初始化level-min实例
+const min = new Min();
+
+// 设置数据库地址和选项
+await min.initializeDatabase("data", options);
 
 // An example of how to store and index a document.
 // Using such a schema, only the title and content in the value object will be indexed.
-// So that those useless indexes of the value (i.e. a field of imgUrl) will not be storeed.
+// 这样，值对象中的无用索引（如imgUrl字段）将不会被存储。
 min.put("Document1",{
     title:"Introduction of level-min",
     content:"This is a long text. Balabala. ",
@@ -39,16 +42,16 @@ min.put("Document1",{
     valueWeights: { title: 5, content: 1 }
 })
 
-min.put("example","A meaningless string.")
+min.put("example", "一个无意义的字符串。");
 
-// In practice, the result may be affected since both put() and search are async .
-// Maybe Promise.all() is a good solution.
+// 在实际应用中，由于put()和search()都是异步的，结果可能会受到影响。
+// 建议使用Promise.all()或async/await来确保正确的执行顺序。
 let result = await min.search("Introduction");
 ```
 
 ## API
 
-- <a href="#Min"><code><b>Min()</b> / min.<b>setDB()</b></code></a>
+- <a href="#Min"><code><b>Min()</b> / min.<b>initializeDatabase()</b></code></a>
 - <a href="#put"><code>min.<b>put()</b></code></a>
 - <a href="#del"><code>min.<b>del()</b></code></a>
 - <a href="#get"><code>min.<b>get()</b></code></a>
@@ -56,65 +59,69 @@ let result = await min.search("Introduction");
 
 <a name="Min"></a>
 
-### `Min(dbAddress,[options,])` / `min.setDB(dbAddress,[options,])`
-这两个函数都将`Min`中的leveldb实例切换到给定地址。
+### `Min()` / `min.initializeDatabase(dbAddress, [options])`
+`Min()`创建一个新的level-min实例，无需任何参数。使用`min.initializeDatabase(dbAddress, [options])`来初始化数据库连接。
 
-Using as ` const min = Min(location)` is  highly recommended.
+推荐用法：
+```js
+const min = new Min();
+await min.initializeDatabase("data", options);
+```
 
 #### options(Same as the content at [leveldown#db.open](https://github.com/Level/leveldown#leveldown_open))
 
-The optional `options` argument may contain:
+可选的`options`参数包含：
 
-- `createIfMissing` (boolean, default: `true`): If `true`, will initialise an empty database at the specified location if one doesn't already exist. If `false` and a database doesn't exist you will receive an error in your `open()` callback and your database won't open.
+- `createIfMissing` (布尔值，默认: `true`): 如果为`true`，当指定位置没有数据库时，将初始化一个空数据库。如果为`false`且数据库不存在，您将在`open()`回调中收到错误，数据库将不会打开。
 
-- `errorIfExists` (boolean, default: `false`): If `true`, you will receive an error in your `open()` callback if the database exists at the specified location.
+- `errorIfExists` (布尔值，默认: `false`): 如果为`true`，当指定位置已存在数据库时，您将在`open()`回调中收到错误。
 
-- `compression` (boolean, default: `true`): If `true`, all _compressible_ data will be run through the Snappy compression algorithm before being stored. Snappy is very fast and shouldn't gain much speed by disabling so leave this on unless you have good reason to turn it off.
+- `compression` (布尔值，默认: `true`): 如果为`true`，所有可压缩的数据将在存储前通过Snappy压缩算法处理。Snappy非常快，禁用它不会获得太多速度提升，因此除非有充分理由，否则请保持开启。
 
-- `cacheSize` (number, default: `8 * 1024 * 1024` = 8MB): The size (in bytes) of the in-memory [LRU](http://en.wikipedia.org/wiki/Cache_algorithms#Least_Recently_Used) cache with frequently used uncompressed block contents.
+- `cacheSize` (数字，默认: `8 * 1024 * 1024` = 8MB): 内存中[LRU](http://en.wikipedia.org/wiki/Cache_algorithms#Least_Recently_Used)缓存的大小（字节），用于存储频繁使用的未压缩块内容。
 
-**Advanced options**
+**高级选项**
 
-The following options are for advanced performance tuning. Modify them only if you can prove actual benefit for your particular application.
+以下选项用于高级性能调优。只有在能够证明对您的特定应用程序有实际好处时才修改它们。
 
-- `writeBufferSize` (number, default: `4 * 1024 * 1024` = 4MB): The maximum size (in bytes) of the log (in memory and stored in the .log file on disk). Beyond this size, LevelDB will convert the log data to the first level of sorted table files. From the LevelDB documentation:
+- `writeBufferSize` (数字，默认: `4 * 1024 * 1024` = 4MB): 日志的最大大小（字节）（内存中并存储在磁盘的.log文件中）。超过此大小，LevelDB将把日志数据转换为第一级排序表文件。根据LevelDB文档：
 
-> Larger values increase performance, especially during bulk loads. Up to two write buffers may be held in memory at the same time, so you may wish to adjust this parameter to control memory usage. Also, a larger write buffer will result in a longer recovery time the next time the database is opened.
+> 较大的值会提高性能，特别是在批量加载期间。最多可以在内存中同时保留两个写入缓冲区，因此您可能希望调整此参数以控制内存使用。此外，较大的写入缓冲区将导致下次打开数据库时更长的恢复时间。
 
-- `blockSize` (number, default `4096` = 4K): The _approximate_ size of the blocks that make up the table files. The size related to uncompressed data (hence "approximate"). Blocks are indexed in the table file and entry-lookups involve reading an entire block and parsing to discover the required entry.
+- `blockSize` (数字，默认 `4096` = 4K): 构成表文件的块的近似大小。大小与未压缩数据相关（因此是"近似"）。块在表文件中建立索引，条目查找涉及读取整个块并解析以发现所需的条目。
 
-- `maxOpenFiles` (number, default: `1000`): The maximum number of files that LevelDB is allowed to have open at a time. If your data store is likely to have a large working set, you may increase this value to prevent file descriptor churn. To calculate the number of files required for your working set, divide your total data by `'maxFileSize'`.
+- `maxOpenFiles` (数字，默认: `1000`): LevelDB一次允许打开的最大文件数。如果您的数据存储可能有很大的工作集，您可以增加此值以防止文件描述符频繁切换。要计算工作集所需的文件数，请将您的总数据除以`'maxFileSize'`。
 
-- `blockRestartInterval` (number, default: `16`): The number of entries before restarting the "delta encoding" of keys within blocks. Each "restart" point stores the full key for the entry, between restarts, the common prefix of the keys for those entries is omitted. Restarts are similar to the concept of keyframes in video encoding and are used to minimise the amount of space required to store keys. This is particularly helpful when using deep namespacing / prefixing in your keys.
+- `blockRestartInterval` (数字，默认: `16`): 在重新启动块内键的"增量编码"之前的条目数。每个"重新启动"点存储条目的完整键，在重新启动之间，这些条目的键的公共前缀被省略。重新启动类似于视频编码中的关键帧概念，用于最小化存储键所需的空间。这在键中使用深度命名空间/前缀时特别有用。
 
 - `maxFileSize` (number, default: `2* 1024 * 1024` = 2MB): The maximum amount of bytes to write to a file before switching to a new one. From the LevelDB documentation:
 
-> ... if your filesystem is more efficient with larger files, you could consider increasing the value. The downside will be longer compactions and hence longer latency/performance hiccups. Another reason to increase this parameter might be when you are initially populating a large database.
+> ...如果您的文件系统对较大文件更有效，您可以考虑增加该值。缺点将是更长的压缩时间，从而导致更长的延迟/性能波动。增加此参数的另一个原因可能是当您最初填充大型数据库时。
 
 ### Notes:
 
-Both `put()` and `del()` have used the [`db.batch()`](https://github.com/Level/leveldown#leveldown_batch) of level to keep the Atomicity inside the db's transactions. Hence, skip those functions offered by `level-min` and operate the `leveldb` directly can be dangerous.
+`put()`和`del()`都使用了level的[`db.batch()`](https://github.com/Level/leveldown#leveldown_batch)来保持数据库事务中的原子性。因此，跳过`level-min`提供的函数直接操作`leveldb`可能是危险的。
 
 <a name="put"></a>
 
 ### `min.put(key,value,[options,])`
 
-<code>put()</code> is an instance method on an existing database object, used to store new entries, or overwrite existing entries in the LevelDB store. At the same time, the indexes based on the input are also generated. A promise is returned.
+<code>put()</code>是现有数据库对象上的实例方法，用于在LevelDB存储中存储新条目或覆盖现有条目。同时，基于输入的索引也会被生成。返回一个Promise。
 
-The `key` should be string. The value may better be `String`, `Array` or `Object`. Other object types result in an unexpected error. Keys may not be `null` or `undefined` and objects converted with `toString()` should not result in an empty-string. Values may not be `null` or `undefined`.
+`key`应该是字符串。`value`最好是`String`、`Array`或`Object`。其他对象类型可能导致意外错误。键不能为`null`或`undefined`，通过`toString()`转换的对象不应产生空字符串。值不能为`null`或`undefined`。
 
 The optional `options` argument may contain:
 
-- `keyWeight` (Number, default: `1`): If the value of given `keyWeight` is less than or equal to zero(<=0), the tokens inside the input key will not be indexed.
-- `valueWeightCalc` (boolean, default: `false`): If `false`, the tokens inside the value will not be counted. Switch it to `true` if it is needed.
-- `defaultValueWeight` (Number, default: `1`): If the value of given `valueWeightCalc` is `true`, its value will be calculated as the default weights of tokens inside value.
-- `valueWeights` (object, default: `{}`):  The values for those spec key/index when the value is an Array/Object. For example, the value is an object -> `{a:text, b:text,...}` and the `valueWeights` is `{a:3}`, the tokens inside field `a` will be calculated as a token-frequency of 3, others' token-frequency will follow the `defaultValueWeight`.
+- `keyWeight` (数字，默认: `1`): 如果给定的`keyWeight`值小于或等于零(<=0)，输入键中的token将不会被索引。
+- `valueWeightCalc` (布尔值，默认: `false`): 如果为`false`，值中的token将不会被计算。如果需要，请将其切换为`true`。
+- `defaultValueWeight` (数字，默认: `1`): 如果给定的`valueWeightCalc`值为`true`，其值将作为值中token的默认权重进行计算。
+- `valueWeights` (对象，默认: `{}`): 当值是数组/对象时，特定键/索引的权重值。例如，值是一个对象`{a:text, b:text,...}`，而`valueWeights`是`{a:3}`，字段`a`中的token将计算为3的token频率，其他token频率将遵循`defaultValueWeight`。
 
 <a name="del"></a>
 
 ### `min.del(key)`
 
-Delete the record of key inside the db. If there are any associated indexes that are generated together before, they will be removed as well. A Promise is returned.
+删除数据库中键的记录。如果有任何之前一起生成的关联索引，它们也将被删除。返回一个Promise。
 
 
 <a name="get"></a>
@@ -122,34 +129,33 @@ Delete the record of key inside the db. If there are any associated indexes that
 ### `min.get(key)`
 
 
-`get()` is the primary method for fetching data from the store. The `key` should be a String. If it doesn't exist in the store then the promise will be rejecedt. A not-found err object will be of type `'NotFoundError'` so you can `err.type == 'NotFoundError'` or you can perform a truthy test on the property `err.notFound`.
+`get()`是从存储中获取数据的主要方法。`key`应该是字符串。如果它在存储中不存在，则promise将被拒绝。未找到的错误对象类型为`'NotFoundError'`，因此您可以使用`err.type == 'NotFoundError'`或对属性`err.notFound`进行真值测试。
 
 ```js
 min.get("example").then(info=>{
     ...
 }).catch(e=>{
-    if(e.type === "NotFoundError"){
-        //there is no such key in the db
-    }
+    if (e.type === "NotFoundError") {
+    // 数据库中没有这样的键
+}
 })
 ```
 
 
 <a name="search"></a>
 
-### `min.search(content, [topK,])`
-`search()` function will tokenize the input and then query them inside the db. If mutiple results are returned, their scores will be calculated using <b>tf-idf</b> algorithm. The top-k of the results sorted by their scores
- in a descending order will finally be returned via promise.
+### `min.search(content, [options])`
+`search()`函数将对输入进行分词，然后在数据库中查询它们。如果返回多个结果，将使用<b>TF-IDF</b>算法和<b>余弦相似度</b>计算它们的分数。按分数降序排列的前k个结果最终将通过promise返回。
 
 ```js
-min.search("Shakespeare").then(results=>{
-    // results in order
-}).catch(e=>{
-    //execption
+min.search("Shakespeare").then(results => {
+    // 结果按顺序返回
+}).catch(error => {
+    // 处理异常
 })
 ```
 
-In the following version, a cosine similarity is on plan.
+在后续版本中，余弦相似度功能正在计划中。
 
 
 <a name="textProcessProcedure"></a>

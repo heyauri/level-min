@@ -1,3 +1,14 @@
+import { createHash } from 'crypto';
+
+// Hash function
+export function generateDocId(key: string): string {
+    return createHash('md5').update(key).digest('hex');
+}
+
+export function generateSha1Hash(data: string): string {
+    return createHash('sha1').update(data).digest('hex');
+}
+
 export function getType(v) {
     return Object.prototype.toString.call(v);
 }
@@ -131,7 +142,7 @@ export function toCDB(str) {
         if (str.charCodeAt(i) > 65281 && str.charCodeAt(i) < 65373) {
             tmp += String.fromCharCode(str.charCodeAt(i) - 65248);
         } else if (str.charCodeAt(i) == 12288) {
-            //空格
+            // Space character
             tmp += String.fromCharCode(str.charCodeAt(i) - 12288 + 32);
         } else {
             tmp += String.fromCharCode(str.charCodeAt(i));
@@ -143,3 +154,49 @@ export function toCDB(str) {
 const zlib = require("zlib");
 export const zip = zlib.gzipSync;
 export const unzip = zlib.gunzipSync;
+
+// Database key constructor
+export function constructIndex(index: string): string {
+    return "0x001_" + index.toString();
+}
+
+export function constructKey(key: string): string {
+    return "0x002_" + key.toString();
+}
+
+// Transaction ID generator
+export function generateTransactionId(): string {
+    return `tx_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+}
+
+// Percentile calculator
+export function percentile(sortedArray: number[], p: number): number {
+    const index = Math.ceil((p / 100) * sortedArray.length) - 1;
+    return sortedArray[Math.max(0, Math.min(index, sortedArray.length - 1))];
+}
+
+// Query hash generator
+export function hashQuery(query: string): string {
+    // Simple query hash for deduplication
+    return query.replace(/\s+/g, ' ').trim().toLowerCase();
+}
+
+// Language code normalizer
+export function regulateLangCode(code: string, langCodes: Record<string, string>): string {
+    return Reflect.has(langCodes, code) ? langCodes[code] : "Default";
+}
+
+// Language type determiner
+export function judgeType(types: string[], tokenizers: string[]): string {
+    let langType = "Default";
+    if (types.indexOf("Chinese") > -1) {
+        langType = "Chinese";
+    } else {
+        for (let key of tokenizers) {
+            if (types.indexOf(key) > -1) {
+                return key;
+            }
+        }
+    }
+    return langType;
+}

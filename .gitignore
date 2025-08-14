@@ -111,3 +111,6 @@ test.js
 scripts
 dictRaw
 pnpm-lock.yaml
+package-lock.json
+task.txt
+comprehensive-test.js
