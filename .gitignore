@@ -114,3 +114,4 @@ pnpm-lock.yaml
 package-lock.json
 task.txt
 comprehensive-test.js
+.DS_Store
